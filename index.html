@@ -6,24 +6,24 @@
   <title>Météo Zimmersheim</title>
   <style>
     body {
-      font-family: Arial, sans-serif; 
-      max-width: 600px; margin: 30px auto; 
+      font-family: Arial, sans-serif;
+      max-width: 600px; margin: 30px auto;
       padding: 10px; background: #eef7fc; color: #333;
     }
     h1 { text-align: center; }
     .weather {
-      background: #fff; 
-      border-radius: 10px; 
+      background: #fff;
+      border-radius: 10px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
       padding: 20px;
     }
     .forecast {
       display: flex; justify-content: space-between; margin-top: 20px;
+      flex-wrap: wrap; gap: 10px;
     }
     .day {
-      background: #d9e9f8; border-radius: 8px; padding: 10px; width: 18%;
-      text-align: center;
-      font-size: 0.9rem;
+      background: #d9e9f8; border-radius: 8px; padding: 10px; width: 110px;
+      text-align: center; font-size: 0.9rem;
     }
   </style>
 </head>
@@ -32,76 +32,75 @@
   <div class="weather">
     <div id="current">
       <h2>Météo actuelle</h2>
-      <p><strong>Condition :</strong> <span id="condition"></span></p>
-      <p><strong>Température :</strong> <span id="temp"></span> °C</p>
-      <p><strong>Humidité :</strong> <span id="humidity"></span> %</p>
-      <p><strong>Vent :</strong> <span id="wind"></span> km/h</p>
+      <p><strong>Condition :</strong> <span id="condition">...</span></p>
+      <p><strong>Température :</strong> <span id="temp">...</span> °C</p>
+      <p><strong>Humidité :</strong> <span id="humidity">...</span> %</p>
+      <p><strong>Vent :</strong> <span id="wind">...</span> km/h</p>
     </div>
     <div id="forecast">
       <h2>Prévisions 5 jours</h2>
-      <div class="forecast" id="forecast-days"></div>
+      <div class="forecast" id="forecast-days">Chargement...</div>
     </div>
   </div>
 
-<script>
-  const apiKey = 'f59e1314a26b162f41dabbc7bb2b7719'; // Remplace par ta clé API OpenWeatherMap
-  const city = 'Zimmersheim,fr';
-  const units = 'metric';
-  const lang = 'fr';
+  <script>
+    const apiKey = 'f59e1314a26b162f41dabbc7bb2b7719'; // ← Remplace ici par ta vraie clé
+    const city = 'Zimmersheim,fr';
+    const units = 'metric';
+    const lang = 'fr';
 
-  async function fetchWeather() {
-    try {
-      // Météo actuelle
-      const currentRes = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=${units}&lang=${lang}`
-      );
-      const currentData = await currentRes.json();
+    async function fetchWeather() {
+      try {
+        // Météo actuelle
+        const currentRes = await fetch(
+          `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=${units}&lang=${lang}`
+        );
+        const currentData = await currentRes.json();
 
-      document.getElementById('condition').textContent = currentData.weather[0].description;
-      document.getElementById('temp').textContent = Math.round(currentData.main.temp);
-      document.getElementById('humidity').textContent = currentData.main.humidity;
-      document.getElementById('wind').textContent = Math.round(currentData.wind.speed * 3.6); // m/s → km/h
+        document.getElementById('condition').textContent = currentData.weather[0].description;
+        document.getElementById('temp').textContent = Math.round(currentData.main.temp);
+        document.getElementById('humidity').textContent = currentData.main.humidity;
+        document.getElementById('wind').textContent = Math.round(currentData.wind.speed * 3.6); // m/s → km/h
 
-      // Prévisions 5 jours (toutes les 3h, on prend 12h00 chaque jour)
-      const forecastRes = await fetch(
-        `https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=${units}&lang=${lang}`
-      );
-      const forecastData = await forecastRes.json();
+        // Prévisions
+        const forecastRes = await fetch(
+          `https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=${units}&lang=${lang}`
+        );
+        const forecastData = await forecastRes.json();
 
-      const forecastDays = document.getElementById('forecast-days');
-      forecastDays.innerHTML = '';
+        const forecastDays = document.getElementById('forecast-days');
+        forecastDays.innerHTML = '';
 
-      // Regrouper par jour
-      const days = {};
-      forecastData.list.forEach(item => {
-        const date = new Date(item.dt * 1000);
-        const dayStr = date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'numeric' });
-        const hour = date.getHours();
-        if (hour === 12) { // on prend la donnée à midi
-          days[dayStr] = item;
+        const days = {};
+        forecastData.list.forEach(item => {
+          const date = new Date(item.dt * 1000);
+          const dayStr = date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'numeric' });
+          const hour = date.getHours();
+          if (hour === 12 && !days[dayStr]) { // Une seule prévision par jour à 12h
+            days[dayStr] = item;
+          }
+        });
+
+        for (const [day, data] of Object.entries(days)) {
+          const iconUrl = `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
+          const div = document.createElement('div');
+          div.className = 'day';
+          div.innerHTML = `
+            <div><strong>${day}</strong></div>
+            <img src="${iconUrl}" alt="${data.weather[0].description}" />
+            <div>${Math.round(data.main.temp_min)}° / ${Math.round(data.main.temp_max)}°C</div>
+            <div>${data.weather[0].description}</div>
+          `;
+          forecastDays.appendChild(div);
         }
-      });
 
-      for (const [day, data] of Object.entries(days)) {
-        const iconUrl = `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
-        const dayDiv = document.createElement('div');
-        dayDiv.className = 'day';
-        dayDiv.innerHTML = `
-          <div><strong>${day}</strong></div>
-          <img src="${iconUrl}" alt="${data.weather[0].description}" />
-          <div>${Math.round(data.main.temp_min)}° / ${Math.round(data.main.temp_max)}°C</div>
-          <div>${data.weather[0].description}</div>
-        `;
-        forecastDays.appendChild(dayDiv);
+      } catch (err) {
+        console.error('Erreur météo :', err);
+        document.getElementById('forecast-days').textContent = "Erreur de chargement.";
       }
-
-    } catch (error) {
-      console.error('Erreur récupération météo:', error);
-      alert('Erreur lors de la récupération des données météo.');
     }
-  }
 
-  fetchWeather();
-</script>
+    fetchWeather();
+  </script>
 </body>
 </html>
