@@ -4,103 +4,162 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Météo Zimmersheim</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
-      max-width: 600px; margin: 30px auto;
-      padding: 10px; background: #eef7fc; color: #333;
+      background: #eef7fc;
+      margin: 0;
+      padding: 20px;
+      max-width: 800px;
+      margin: auto;
     }
-    h1 { text-align: center; }
-    .weather {
+    h1, h2 {
+      text-align: center;
+    }
+    .card {
       background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      border-radius: 12px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
       padding: 20px;
     }
-    .forecast {
-      display: flex; justify-content: space-between; margin-top: 20px;
-      flex-wrap: wrap; gap: 10px;
-    }
-    .day {
-      background: #d9e9f8; border-radius: 8px; padding: 10px; width: 110px;
-      text-align: center; font-size: 0.9rem;
+    .label { font-weight: bold; }
+    canvas {
+      width: 100% !important;
+      max-height: 400px;
     }
   </style>
 </head>
 <body>
-  <h1>Météo dynamique à Zimmersheim</h1>
-  <div class="weather">
-    <div id="current">
-      <h2>Météo actuelle</h2>
-      <p><strong>Condition :</strong> <span id="condition">...</span></p>
-      <p><strong>Température :</strong> <span id="temp">...</span> °C</p>
-      <p><strong>Humidité :</strong> <span id="humidity">...</span> %</p>
-      <p><strong>Vent :</strong> <span id="wind">...</span> km/h</p>
-    </div>
-    <div id="forecast">
-      <h2>Prévisions 5 jours</h2>
-      <div class="forecast" id="forecast-days">Chargement...</div>
-    </div>
+  <h1>🌤️ Météo à Zimmersheim</h1>
+
+  <div class="card" id="current">
+    <h2>Météo actuelle</h2>
+    <p><span class="label">Condition :</span> <span id="description"></span></p>
+    <p><span class="label">Température :</span> <span id="temp"></span> °C</p>
+    <p><span class="label">Humidité :</span> <span id="humidity"></span> %</p>
+    <p><span class="label">Pression :</span> <span id="pressure"></span> hPa</p>
+    <p><span class="label">Vent :</span> <span id="wind"></span> km/h</p>
+    <p><span class="label">Pluie :</span> <span id="rain"></span></p>
+    <p><span class="label">Neige :</span> <span id="snow"></span></p>
   </div>
 
-  <script>
-    const apiKey = 'f59e1314a26b162f41dabbc7bb2b7719'; // ← Remplace ici par ta vraie clé
-    const city = 'Zimmersheim,fr';
-    const units = 'metric';
-    const lang = 'fr';
+  <div class="card">
+    <h2>📈 Prévisions 5 jours</h2>
+    <canvas id="forecastChart"></canvas>
+  </div>
 
-    async function fetchWeather() {
-      try {
-        // Météo actuelle
-        const currentRes = await fetch(
-          `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=${units}&lang=${lang}`
-        );
-        const currentData = await currentRes.json();
+<script>
+const apiKey = "f59e1314a26b162f41dabbc7bb2b7719"; // <-- à remplacer par ta clé API OpenWeatherMap
+const city = "Zimmersheim,fr";
+const units = "metric";
+const lang = "fr";
 
-        document.getElementById('condition').textContent = currentData.weather[0].description;
-        document.getElementById('temp').textContent = Math.round(currentData.main.temp);
-        document.getElementById('humidity').textContent = currentData.main.humidity;
-        document.getElementById('wind').textContent = Math.round(currentData.wind.speed * 3.6); // m/s → km/h
+async function fetchWeather() {
+  const currentRes = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=${units}&lang=${lang}`);
+  const current = await currentRes.json();
 
-        // Prévisions
-        const forecastRes = await fetch(
-          `https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=${units}&lang=${lang}`
-        );
-        const forecastData = await forecastRes.json();
+  document.getElementById("description").textContent = current.weather[0].description;
+  document.getElementById("temp").textContent = Math.round(current.main.temp);
+  document.getElementById("humidity").textContent = current.main.humidity;
+  document.getElementById("pressure").textContent = current.main.pressure;
+  document.getElementById("wind").textContent = Math.round(current.wind.speed * 3.6); // m/s → km/h
+  document.getElementById("rain").textContent = current.rain?.["1h"] ? current.rain["1h"] + " mm" : "Aucune";
+  document.getElementById("snow").textContent = current.snow?.["1h"] ? current.snow["1h"] + " mm" : "Aucune";
+}
 
-        const forecastDays = document.getElementById('forecast-days');
-        forecastDays.innerHTML = '';
+async function fetchForecast() {
+  const res = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=${units}&lang=${lang}`);
+  const data = await res.json();
 
-        const days = {};
-        forecastData.list.forEach(item => {
-          const date = new Date(item.dt * 1000);
-          const dayStr = date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'numeric' });
-          const hour = date.getHours();
-          if (hour === 12 && !days[dayStr]) { // Une seule prévision par jour à 12h
-            days[dayStr] = item;
-          }
-        });
+  const labels = [];
+  const temps = [];
+  const minTemps = [];
+  const maxTemps = [];
+  const rains = [];
+  const snows = [];
+  const pressures = [];
 
-        for (const [day, data] of Object.entries(days)) {
-          const iconUrl = `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
-          const div = document.createElement('div');
-          div.className = 'day';
-          div.innerHTML = `
-            <div><strong>${day}</strong></div>
-            <img src="${iconUrl}" alt="${data.weather[0].description}" />
-            <div>${Math.round(data.main.temp_min)}° / ${Math.round(data.main.temp_max)}°C</div>
-            <div>${data.weather[0].description}</div>
-          `;
-          forecastDays.appendChild(div);
+  data.list.forEach(item => {
+    const date = new Date(item.dt * 1000);
+    const label = date.toLocaleString('fr-FR', { weekday: 'short', hour: '2-digit' });
+    labels.push(label);
+    temps.push(item.main.temp);
+    minTemps.push(item.main.temp_min);
+    maxTemps.push(item.main.temp_max);
+    rains.push(item.rain?.["3h"] || 0);
+    snows.push(item.snow?.["3h"] || 0);
+    pressures.push(item.main.pressure);
+  });
+
+  const ctx = document.getElementById("forecastChart").getContext("2d");
+  new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Température (°C)",
+          data: temps,
+          type: "line",
+          borderColor: "orange",
+          backgroundColor: "transparent",
+          yAxisID: 'y1'
+        },
+        {
+          label: "Pluie (mm)",
+          data: rains,
+          backgroundColor: "blue",
+          yAxisID: 'y2'
+        },
+        {
+          label: "Neige (mm)",
+          data: snows,
+          backgroundColor: "lightblue",
+          yAxisID: 'y2'
+        },
+        {
+          label: "Pression (hPa)",
+          data: pressures,
+          type: "line",
+          borderColor: "gray",
+          backgroundColor: "transparent",
+          borderDash: [5, 5],
+          yAxisID: 'y3'
         }
-
-      } catch (err) {
-        console.error('Erreur météo :', err);
-        document.getElementById('forecast-days').textContent = "Erreur de chargement.";
+      ]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y1: {
+          type: 'linear',
+          position: 'left',
+          title: { display: true, text: "Température (°C)" },
+        },
+        y2: {
+          type: 'linear',
+          position: 'right',
+          title: { display: true, text: "Précipitations (mm)" },
+          grid: { drawOnChartArea: false }
+        },
+        y3: {
+          type: 'linear',
+          display: false
+        }
+      },
+      plugins: {
+        legend: { position: 'top' },
+        tooltip: { mode: 'index', intersect: false }
       }
     }
+  });
+}
 
-    fetchWeather();
-  </script>
+fetchWeather();
+fetchForecast();
+</script>
+
 </body>
 </html>
