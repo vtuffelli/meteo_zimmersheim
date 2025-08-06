@@ -1,145 +1,142 @@
 <!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Météo complète Zimmersheim - améliorée</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-  body, html {
-    margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(to bottom, #87ceeb, #f0f8ff);
-    color: #222;
-    overflow-x: hidden;
-  }
-  /* Fond animé simplifié */
-  #background-anim {
-    position: fixed;
-    top:0; left:0; right:0; bottom:0;
-    z-index: -1;
-    pointer-events: none;
-    overflow: hidden;
-  }
-  /* Nuages animés */
-  .cloud {
-    position: absolute;
-    background: #fff;
-    background: linear-gradient(to bottom, #f0f4f8, #cbd6e8);
-    border-radius: 50px;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
-    animation: cloudMove linear infinite;
-    opacity: 0.8;
-  }
-  .cloud::before, .cloud::after {
-    content: '';
-    position: absolute;
-    background: inherit;
-    border-radius: 50px;
-  }
-  .cloud::before {
-    width: 60px; height: 60px;
-    top: -30px; left: 10px;
-  }
-  .cloud::after {
-    width: 50px; height: 50px;
-    top: -20px; left: 45px;
-  }
-  @keyframes cloudMove {
-    0% { left: -150px; }
-    100% { left: 110vw; }
-  }
-  /* Pluie animée */
-  .rain {
-    position: absolute;
-    width: 2px; height: 15px;
-    background: rgba(0, 150, 255, 0.5);
-    border-radius: 50%;
-    animation: rainFall linear infinite;
-  }
-  @keyframes rainFall {
-    0% { top: -20px; opacity: 1; }
-    100% { top: 110vh; opacity: 0; }
-  }
-  /* Neige animée */
-  .snow {
-    position: absolute;
-    width: 8px; height: 8px;
-    background: white;
-    border-radius: 50%;
-    filter: drop-shadow(0 0 1px #aaa);
-    animation: snowFall linear infinite;
-  }
-  @keyframes snowFall {
-    0% { top: -10px; opacity: 1; transform: translateX(0); }
-    100% { top: 110vh; opacity: 0; transform: translateX(20px); }
-  }
-  #container {
-    display: flex; max-width: 1200px; margin: 30px auto; gap: 20px;
-    flex-wrap: wrap;
-  }
-  #left-panel {
-    flex: 1 1 350px;
-    background: rgba(255,255,255,0.9);
-    border-radius: 15px;
-    padding: 20px;
-    box-shadow: 0 0 30px rgba(0,0,0,0.1);
-    user-select: none;
-  }
-  #right-panel {
-    flex: 1 1 600px;
-    border-radius: 15px;
-    overflow: hidden;
-    box-shadow: 0 0 30px rgba(0,0,0,0.1);
-  }
-  #right-panel iframe {
-    width: 100%; height: 300px; border: none;
-  }
-  h1, h2 {
-    margin-bottom: 15px; user-select: none;
-    text-align: center;
-  }
-  .info-row {
-    margin: 10px 0;
-    font-size: 1.1rem;
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .label {
-    font-weight: 700;
-    color: #555;
-  }
-  #condition-icon {
-    display: block;
-    margin: 10px auto;
-    width: 100px; height: 100px;
-  }
-  /* Flèche direction vent - taille normale */
-  #wind-arrow {
-    display: inline-block;
-    width: 24px; height: 24px;
-    margin-left: 8px;
-    vertical-align: middle;
-    transition: transform 0.3s ease;
-  }
-  /* Graphiques */
-  section.chart-section {
-    background: rgba(255,255,255,0.95);
-    margin: 30px auto;
-    max-width: 1200px;
-    border-radius: 15px;
-    padding: 20px;
-    box-shadow: 0 0 30px rgba(0,0,0,0.08);
-    user-select: none;
-  }
-  canvas {
-    width: 100% !important;
-    max-height: 400px !important;
-  }
-  /* Liste qualité air */
-  #airQualityList {
-    list-style:none; padding-left:0; font-size:1rem; max-width: 600px; margin: 0 auto 20px auto;
-  }
-</style>
-</head>
+<html lang="fr">  
+<head>  
+  <meta charset="UTF-8" />  
+  <meta name="viewport" content="width=device-width, initial-scale=1" />  
+  <title>Météo complète Zimmersheim - améliorée</title>  
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>  
+  <style>  
+    body, html {  
+      margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;  
+      background: linear-gradient(to bottom, #87ceeb, #f0f8ff);  
+      color: #222;  
+      overflow-x: hidden;  
+    }  
+
+    #background-anim {  
+      position: fixed;  
+      top:0; left:0; right:0; bottom:0;  
+      z-index: -1;  
+      pointer-events: none;  
+      overflow: hidden;  
+    }
+
+    .cloud {  
+      position: absolute;  
+      background: linear-gradient(to bottom, #f0f4f8, #cbd6e8);  
+      border-radius: 50px;  
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));  
+      animation: cloudMove linear infinite;  
+      opacity: 0.8;  
+    }  
+    .cloud::before, .cloud::after {  
+      content: '';  
+      position: absolute;  
+      background: inherit;  
+      border-radius: 50px;  
+    }  
+    .cloud::before { width: 60px; height: 60px; top: -30px; left: 10px; }  
+    .cloud::after { width: 50px; height: 50px; top: -20px; left: 45px; }  
+
+    @keyframes cloudMove {  
+      0% { left: -150px; }  
+      100% { left: 110vw; }  
+    }  
+
+    .rain {
+      position: absolute;
+      width: 2px; height: 15px;
+      background: rgba(0, 150, 255, 0.5);
+      border-radius: 50%;
+      animation: rainFall linear infinite;
+    }
+    @keyframes rainFall {
+      0% { top: -20px; opacity: 1; }
+      100% { top: 110vh; opacity: 0; }
+    }
+
+    .snow {
+      position: absolute;
+      width: 8px; height: 8px;
+      background: white;
+      border-radius: 50%;
+      filter: drop-shadow(0 0 1px #aaa);
+      animation: snowFall linear infinite;
+    }
+    @keyframes snowFall {
+      0% { top: -10px; opacity: 1; transform: translateX(0); }
+      100% { top: 110vh; opacity: 0; transform: translateX(20px); }
+    }
+
+    .moon {
+      position: absolute;
+      top: 60px;
+      right: 60px;
+      width: 80px;
+      height: 80px;
+      background: radial-gradient(circle at 30% 30%, #fff 40%, #ccc 70%);
+      border-radius: 50%;
+      box-shadow: 0 0 30px #fff;
+      animation: moonGlow 10s ease-in-out infinite alternate;
+    }
+    @keyframes moonGlow {
+      from { opacity: 0.6; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    #container {
+      display: flex; max-width: 1200px; margin: 30px auto; gap: 20px;
+      flex-wrap: wrap;
+    }
+    #left-panel {
+      flex: 1 1 350px;
+      background: rgba(255,255,255,0.9);
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 0 30px rgba(0,0,0,0.1);
+      user-select: none;
+    }
+    #right-panel {
+      flex: 1 1 600px;
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 0 30px rgba(0,0,0,0.1);
+    }
+    #right-panel iframe {
+      width: 100%; height: 300px; border: none;
+    }
+
+    h1, h2 {
+      margin-bottom: 15px; user-select: none;
+      text-align: center;
+    }
+
+    .info-row {
+      margin: 10px 0;
+      font-size: 1.1rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    .label {
+      font-weight: 700;
+      color: #555;
+    }
+
+    #condition-icon {
+      display: block;
+      margin: 10px auto;
+      width: 100px; height: 100px;
+    }
+
+    #wind-arrow {
+      display: inline-block;
+      width: 24px; height: 24px;
+      margin-left: 8px;
+      vertical-align: middle;
+      transition: transform 0.3s ease;
+    }
+  </style>  
+</head>  
 <body>
   <div id="background-anim"></div>
   <div id="container">
@@ -154,19 +151,18 @@
       <div class="info-row">
         <span class="label">Vent :</span>
         <span id="wind"></span> km/h
-        <svg id="wind-arrow" viewBox="0 0 24 24" fill="none" stroke="#0077cc" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" >
+        <svg id="wind-arrow" viewBox="0 0 24 24" fill="none" stroke="#0077cc" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
           <line x1="12" y1="19" x2="12" y2="5"></line>
           <polyline points="5 12 12 5 19 12"></polyline>
         </svg>
       </div>
-      <div class="info-row">
-        <span class="label">Direction vent :</span>
-        <span id="wind-dir"></span>
-      </div>
+      <div class="info-row"><span class="label">Direction vent :</span> <span id="wind-dir"></span></div>
       <div class="info-row"><span class="label">Lever du soleil :</span> <span id="sunrise"></span></div>
       <div class="info-row"><span class="label">Coucher du soleil :</span> <span id="sunset"></span></div>
+      <div class="info-row"><span class="label">Luminosité estimée :</span> <span id="luminosity"></span> %</div>
     </div>
-    <div id="right-panel">
+
+        <div id="right-panel">
       <h2 style="text-align:center; padding: 10px 0;">Vue satellite - Zimmersheim</h2>
       <iframe
         id="map-frame"
@@ -175,569 +171,344 @@
       </iframe>
     </div>
   </div>
+
   <section class="chart-section">
     <h2>📊 Graphique principal</h2>
     <canvas id="mainChart"></canvas>
   </section>
   <section class="chart-section">
-    <h2>📊 Graphique secondaire (vent, luminosité, UV)</h2>
+    <h2>📊 Graphique secondaire (vent)</h2>
     <canvas id="windChart"></canvas>
   </section>
-  <section class="chart-section">
-    <h2>🌫️ Qualité de l'air</h2>
-    <ul id="airQualityList"></ul>
-    <canvas id="airChart"></canvas>
-  </section>
-<script>
-  const apiKey = "f59e1314a26b162f41dabbc7bb2b7719"; // Remplace par ta clé OpenWeatherMap
-  const city = "Zimmersheim,fr";
-  const units = "metric";
-  const lang = "fr";
 
-  const conditionIcon = document.getElementById('condition-icon');
-  const windArrow = document.getElementById('wind-arrow');
-  const windDirSpan = document.getElementById('wind-dir');
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const apiKey = "f59e1314a26b162f41dabbc7bb2b7719"; // Remplace par ta clé OpenWeatherMap
+    const city = "Zimmersheim,fr";
 
-  function degToCardinal(deg) {
-    if (deg == null) return "N/A";
-    const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE',
-                        'S', 'SSO', 'SO', 'OSO', 'O', 'ONO', 'NO', 'NNO'];
-    const index = Math.floor(((deg + 11.25) % 360) / 22.5);
-    return directions[index];
-  }
-
-  function formatTime(unixTimestamp) {
-    const d = new Date(unixTimestamp * 1000);
-    return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-  }
-
-  function clearChildren(parent) {
-    while (parent.firstChild) parent.removeChild(parent.firstChild);
-  }
-
-  // Crée les nuages animés
-  function createClouds() {
-    const container = document.getElementById('background-anim');
-    clearChildren(container);
-    for (let i=0; i<5; i++) {
-      const cloud = document.createElement('div');
-      cloud.className = 'cloud';
-      cloud.style.top = (20 + i*50) + 'px';
-      cloud.style.width = (80 + Math.random()*60) + 'px';
-      cloud.style.height = '50px';
-      cloud.style.animationDuration = (30 + Math.random()*40) + 's';
-      cloud.style.animationDelay = (-Math.random()*60) + 's';
-      container.appendChild(cloud);
+    function clearChildren(parent) {
+      while (parent.firstChild) parent.removeChild(parent.firstChild);
     }
-  }
 
-  // Crée la pluie animée
-  function createRain() {
-    const container = document.getElementById('background-anim');
-    clearChildren(container);
-    for (let i=0; i<50; i++) {
-      const drop = document.createElement('div');
-      drop.className = 'rain';
-      drop.style.left = (Math.random() * window.innerWidth) + 'px';
-      drop.style.animationDuration = (0.5 + Math.random()*0.5) + 's';
-      drop.style.animationDelay = (-Math.random()*1) + 's';
-      container.appendChild(drop);
+    function createMoon() {
+      const container = document.getElementById('background-anim');
+      const moon = document.createElement('div');
+      moon.className = 'moon';
+      container.appendChild(moon);
     }
-  }
 
-  // Crée la neige animée
-  function createSnow() {
-    const container = document.getElementById('background-anim');
-    clearChildren(container);
-    for (let i=0; i<40; i++) {
-      const flake = document.createElement('div');
-      flake.className = 'snow';
-      flake.style.left = (Math.random() * window.innerWidth) + 'px';
-      flake.style.animationDuration = (3 + Math.random()*4) + 's';
-      flake.style.animationDelay = (-Math.random()*7) + 's';
-      container.appendChild(flake);
+    function createClouds() {
+      const container = document.getElementById('background-anim');
+      clearChildren(container);
+      for (let i = 0; i < 5; i++) {
+        const cloud = document.createElement('div');
+        cloud.className = 'cloud';
+        cloud.style.top = (20 + i * 50) + 'px';
+        cloud.style.width = (80 + Math.random() * 60) + 'px';
+        cloud.style.height = '50px';
+        cloud.style.animationDuration = (30 + Math.random() * 40) + 's';
+        cloud.style.animationDelay = (-Math.random() * 60) + 's';
+        container.appendChild(cloud);
+      }
     }
-  }
 
-  // Supprime toute animation
-  function clearAnimations() {
-    const container = document.getElementById('background-anim');
-    clearChildren(container);
-  }
-
-  let mainChartInstance = null;
-  let windChartInstance = null;
-  let airChartInstance = null;
-
-  function isNight(nowUnix, sunriseUnix, sunsetUnix) {
-    return nowUnix < sunriseUnix || nowUnix > sunsetUnix;
-  }
-
-  async function fetchWeather() {
-    try {
-      const res = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=${units}&lang=${lang}`);
-      const data = await res.json();
-
-      document.getElementById("description").textContent = data.weather[0].description;
-      document.getElementById("temp").textContent = Math.round(data.main.temp);
-      document.getElementById("humidity").textContent = data.main.humidity;
-      let precip = 0;
-      if(data.rain && data.rain["1h"]) precip += data.rain["1h"];
-      if(data.snow && data.snow["1h"]) precip += data.snow["1h"];
-      document.getElementById("precip").textContent = precip > 0 ? precip.toFixed(1) + " mm" : "Aucune";
-
-      document.getElementById("pressure").textContent = data.main.pressure;
-      document.getElementById("wind").textContent = Math.round(data.wind.speed * 3.6);
-
-      // Direction vent cardinal + rotation flèche
-      const deg = data.wind.deg;
-      const cardinal = degToCardinal(deg);
-      windDirSpan.textContent = `${cardinal} (${deg}°)`;
-      windArrow.style.transform = `rotate(${deg}deg)`;
-
-      document.getElementById("sunrise").textContent = formatTime(data.sys.sunrise);
-      document.getElementById("sunset").textContent = formatTime(data.sys.sunset);
-
-      conditionIcon.src = `https://openweathermap.org/img/wn/${data.weather[0].icon}@4x.png`;
-      conditionIcon.alt = data.weather[0].description;
-
-      // Fond animé selon météo principale
-      const main = data.weather[0].main.toLowerCase();
-      if(main.includes("rain")) createRain();
-      else if(main.includes("snow")) createSnow();
-      else if(main.includes("cloud")) createClouds();
-      else clearAnimations();
-
-    } catch (e) {
-      console.error("Erreur météo actuelle :", e);
-      alert("Erreur lors de la récupération de la météo actuelle.");
+    function createRain() {
+      const container = document.getElementById('background-anim');
+      clearChildren(container);
+      for (let i = 0; i < 50; i++) {
+        const drop = document.createElement('div');
+        drop.className = 'rain';
+        drop.style.left = (Math.random() * window.innerWidth) + 'px';
+        drop.style.animationDuration = (0.5 + Math.random() * 0.5) + 's';
+        drop.style.animationDelay = (-Math.random() * 1) + 's';
+        container.appendChild(drop);
+      }
     }
-  }
+
+    function createSnow() {
+      const container = document.getElementById('background-anim');
+      clearChildren(container);
+      for (let i = 0; i < 40; i++) {
+        const flake = document.createElement('div');
+        flake.className = 'snow';
+        flake.style.left = (Math.random() * window.innerWidth) + 'px';
+        flake.style.animationDuration = (3 + Math.random() * 4) + 's';
+        flake.style.animationDelay = (-Math.random() * 7) + 's';
+        container.appendChild(flake);
+      }
+    }
+
+    function degToCardinal(deg) {
+      if (deg == null) return "N/A";
+      const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE',
+        'S', 'SSO', 'SO', 'OSO', 'O', 'ONO', 'NO', 'NNO'];
+      const index = Math.floor(((deg + 11.25) % 360) / 22.5);
+      return directions[index];
+    }
+
+    function formatTime(unixTimestamp) {
+      const d = new Date(unixTimestamp * 1000);
+      return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    async function fetchWeather() {
+      try {
+        const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric&lang=fr`);
+        const data = await res.json();
+
+        document.getElementById("description").textContent = data.weather[0].description;
+        document.getElementById("temp").textContent = Math.round(data.main.temp);
+        document.getElementById("humidity").textContent = data.main.humidity;
+
+        let precip = 0;
+        if (data.rain && data.rain["1h"]) precip += data.rain["1h"];
+        if (data.snow && data.snow["1h"]) precip += data.snow["1h"];
+        document.getElementById("precip").textContent = precip > 0 ? precip.toFixed(1) + " mm" : "Aucune";
+
+        document.getElementById("pressure").textContent = data.main.pressure;
+
+        const windKmh = Math.round(data.wind.speed * 3.6);
+        document.getElementById("wind").textContent = windKmh;
+
+        const deg = data.wind.deg;
+        const cardinal = degToCardinal(deg);
+        document.getElementById("wind-dir").textContent = `${cardinal} (${deg}°)`;
+        document.getElementById("wind-arrow").style.transform = `rotate(${deg}deg)`;
+
+        const sunrise = data.sys.sunrise;
+        const sunset = data.sys.sunset;
+        const now = Math.floor(Date.now() / 1000);
+
+        document.getElementById("sunrise").textContent = formatTime(sunrise);
+        document.getElementById("sunset").textContent = formatTime(sunset);
+
+        document.getElementById("condition-icon").src = `https://openweathermap.org/img/wn/${data.weather[0].icon}@4x.png`;
+
+        const cloudiness = data.clouds.all;
+        const luminosity = Math.round((1 - cloudiness / 100) * 100);
+        document.getElementById("luminosity").textContent = luminosity;
+
+        const main = data.weather[0].main.toLowerCase();
+        if (main.includes("rain")) createRain();
+        else if (main.includes("snow")) createSnow();
+        else if (main.includes("cloud")) createClouds();
+        else clearChildren(document.getElementById("background-anim"));
+
+        if (now < sunrise || now > sunset) createMoon();
+
+      } catch (e) {
+        console.error("Erreur météo actuelle :", e);
+        alert("Erreur lors de la récupération de la météo.");
+      }
+    }
 
     async function fetchForecast() {
-    try {
-      const res = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=${units}&lang=${lang}`);
-      const data = await res.json();
+      try {
+        const res = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=metric&lang=fr`);
+        const data = await res.json();
 
-      const labels = [];
-      const temps = [];
-      const humidities = [];
-      const pressures = [];
-      const rains = [];
-      const snows = [];
-      const winds = [];
-      const windDirs = [];
-      const lumens = [];
-      const uvIndexes = [];
-      const airPm25 = [];
-      const airPm10 = [];
-      const airO3 = [];
-      const airNo2 = [];
-      const airSo2 = [];
-      const airCo = [];
+        const labels = [];
+        const temps = [];
+        const humidities = [];
+        const pressures = [];
+        const rains = [];
+        const snows = [];
+        const winds = [];
+        const windDirs = [];
 
-      // Pour la qualité de l'air et UV, il faut une autre API : ici on fait une requête
-      // supplémentaire pour l'air et UV avec coord GPS de Zimmersheim
+        data.list.forEach(item => {
+          const date = new Date(item.dt * 1000);
+          const label = date.toLocaleString('fr-FR', { weekday: 'short', hour: '2-digit', minute: '2-digit' });
+          labels.push(label);
 
-      // Extraire coord GPS pour requête qualité air / UV
-      const lat = data.city.coord.lat;
-      const lon = data.city.coord.lon;
+          temps.push(item.main.temp);
+          humidities.push(item.main.humidity);
+          pressures.push(item.main.pressure);
+          rains.push(item.rain?.["3h"] || 0);
+          snows.push(item.snow?.["3h"] || 0);
+          winds.push(item.wind.speed * 3.6);
+          windDirs.push(item.wind.deg);
+        });
 
-      // Récupération qualité air & UV (OpenWeatherMap Air Pollution + UV)
-      const airRes = await fetch(`https://api.openweathermap.org/data/2.5/air_pollution/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}`);
-      const airData = await airRes.json();
+        // Chart principal
+        const ctxMain = document.getElementById("mainChart").getContext("2d");
+        new Chart(ctxMain, {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "Température (°C)",
+                data: temps,
+                borderColor: "red",
+                yAxisID: 'y1',
+                tension: 0.3,
+                fill: false,
+                pointRadius: 3
+              },
+              {
+                label: "Humidité (%)",
+                data: humidities,
+                borderColor: "blue",
+                yAxisID: 'y2',
+                tension: 0.3,
+                fill: false,
+                pointRadius: 3
+              },
+              {
+                label: "Pluie + Neige (mm)",
+                data: rains.map((r, i) => r + snows[i]),
+                backgroundColor: "rgba(0,0,255,0.5)",
+                type: 'bar',
+                yAxisID: 'y3',
+                borderRadius: 4
+              },
+              {
+                label: "Pression (hPa)",
+                data: pressures,
+                borderColor: "gray",
+                borderDash: [5, 5],
+                fill: false,
+                yAxisID: 'y4',
+                tension: 0.3,
+                pointRadius: 2
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            interaction: { mode: 'index', intersect: false },
+            stacked: false,
+            scales: {
+              y1: {
+                type: 'linear',
+                position: 'left',
+                title: { display: true, text: 'Température (°C)' }
+              },
+              y2: {
+                type: 'linear',
+                position: 'right',
+                offset: true,
+                title: { display: true, text: 'Humidité (%)' },
+                grid: { drawOnChartArea: false },
+                max: 100
+              },
+              y3: {
+                type: 'linear',
+                position: 'right',
+                offset: true,
+                title: { display: true, text: 'Précipitations (mm)' },
+                grid: { drawOnChartArea: false }
+              },
+              y4: {
+                type: 'linear',
+                position: 'left',
+                offset: true,
+                title: { display: true, text: 'Pression (hPa)' },
+                grid: { drawOnChartArea: false }
+              }
+            },
+            plugins: {
+              legend: { position: 'top' },
+              tooltip: {
+                callbacks: {
+                  label: context => {
+                    const label = context.dataset.label || '';
+                    let val = context.parsed.y;
+                    if (label.includes('Direction du vent')) {
+                      const deg = val;
+                      const card = degToCardinal(deg);
+                      return `${label}: ${deg}° (${card})`;
+                    }
+                    return label + ': ' + val;
+                  }
+                }
+              }
+            }
+          }
+        });
 
-      const uvRes = await fetch(`https://api.openweathermap.org/data/2.5/uvi/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&cnt=40`);
-      const uvData = await uvRes.json();
+        // Chart secondaire (vent)
+        const ctxWind = document.getElementById("windChart").getContext("2d");
+        new Chart(ctxWind, {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "Vitesse du vent (km/h)",
+                data: winds,
+                borderColor: "#1f8ef1",
+                yAxisID: 'y1',
+                tension: 0.3,
+                fill: false,
+                pointRadius: 3
+              },
+              {
+                label: "Direction du vent (°)",
+                data: windDirs,
+                borderColor: "#555",
+                borderDash: [6, 4],
+                yAxisID: 'y2',
+                fill: false,
+                tension: 0.3,
+                pointRadius: 2
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            interaction: { mode: 'index', intersect: false },
+            stacked: false,
+            scales: {
+              y1: {
+                type: 'linear',
+                position: 'left',
+                title: { display: true, text: 'Vitesse (km/h)' },
+                beginAtZero: true
+              },
+              y2: {
+                type: 'linear',
+                position: 'right',
+                offset: true,
+                title: { display: true, text: 'Direction (°)' },
+                min: 0,
+                max: 360,
+                grid: { drawOnChartArea: false }
+              }
+            },
+            plugins: {
+              legend: { position: 'top' },
+              tooltip: {
+                callbacks: {
+                  label: context => {
+                    const label = context.dataset.label || '';
+                    let val = context.parsed.y;
+                    if (label.includes('Direction du vent')) {
+                      const deg = val;
+                      const card = degToCardinal(deg);
+                      return `${label}: ${deg}° (${card})`;
+                    }
+                    return label + ': ' + val;
+                  }
+                }
+              }
+            }
+          }
+        });
 
-      // On va aligner la qualité air / UV sur les prévisions horaires (tous ont 3h d’intervalle)
-
-      // On boucle sur data.list pour construire tableaux + insérer UV & air
-      data.list.forEach((item, i) => {
-        const date = new Date(item.dt * 1000);
-        const label = date.toLocaleString('fr-FR', { weekday: 'short', hour: '2-digit', minute: '2-digit' });
-        labels.push(label);
-
-        temps.push(item.main.temp);
-        humidities.push(item.main.humidity);
-        pressures.push(item.main.pressure);
-        rains.push(item.rain?.["3h"] || 0);
-        snows.push(item.snow?.["3h"] || 0);
-        winds.push(item.wind.speed * 3.6);
-        windDirs.push(item.wind.deg);
-
-        // Estimation de la luminosité corrigée pour nuit/jour et nébulosité
-        const nowUnix = item.dt;
-        const sunriseUnix = data.city.sunrise || 0;
-        const sunsetUnix = data.city.sunset || 0;
-        // Luminosité max approx 100000 lux (plein soleil), on estime en fonction de l'heure + nébulosité
-        const isNightTime = nowUnix < sunriseUnix || nowUnix > sunsetUnix;
-        // Nébulosité
-        const cloudiness = item.clouds ? item.clouds.all / 100 : 0;
-        // Luminosité brute = 100000 lux max * (1 - nébulosité) * jour/nuit (0 ou 1)
-        const rawLum = isNightTime ? 0 : 100000 * (1 - cloudiness);
-        lumens.push(rawLum);
-
-        // UV
-        // On prend l'UV de l'heure la plus proche (on trouve dans uvData les timestamps)
-        let uvVal = 0;
-        if (uvData && uvData.length > 0) {
-          // Trouver entrée UV la plus proche
-          const uvEntry = uvData.reduce((prev, curr) => {
-            return Math.abs(curr.date_iso.slice(11,16).replace(':','') - label.slice(-5).replace(':','')) <
-                   Math.abs(prev.date_iso.slice(11,16).replace(':','') - label.slice(-5).replace(':','')) ? curr : prev;
-          });
-          uvVal = uvEntry.value || 0;
-        }
-        uvIndexes.push(uvVal);
-
-        // Qualité de l'air : prendre la plus proche dans airData.list pour cet index
-        if (airData && airData.list && airData.list.length > 0 && airData.list[i]) {
-          const airEntry = airData.list[i];
-          airPm25.push(airEntry.components.pm2_5);
-          airPm10.push(airEntry.components.pm10);
-          airO3.push(airEntry.components.o3);
-          airNo2.push(airEntry.components.no2);
-          airSo2.push(airEntry.components.so2);
-          airCo.push(airEntry.components.co);
-        } else {
-          airPm25.push(null);
-          airPm10.push(null);
-          airO3.push(null);
-          airNo2.push(null);
-          airSo2.push(null);
-          airCo.push(null);
-        }
-      });
-
-      // Affichage liste qualité de l'air (dernière valeur dispo)
-      const airList = document.getElementById('airQualityList');
-      clearChildren(airList);
-      const lastIndex = airPm25.length - 1;
-      function formatAQ(value) {
-        return value !== null ? value.toFixed(1) : 'N/A';
+      } catch (e) {
+        console.error("Erreur récupération prévisions :", e);
+        alert("Erreur lors de la récupération des prévisions météo.");
       }
-      const airItems = [
-        { label: 'PM2.5 (particules fines)', val: airPm25[lastIndex], short: 'PM2.5' },
-        { label: 'PM10 (particules grossières)', val: airPm10[lastIndex], short: 'PM10' },
-        { label: 'Ozone (O3)', val: airO3[lastIndex], short: 'O3' },
-        { label: 'Dioxyde d\'azote (NO2)', val: airNo2[lastIndex], short: 'NO2' },
-        { label: 'Dioxyde de soufre (SO2)', val: airSo2[lastIndex], short: 'SO2' },
-        { label: 'Monoxyde de carbone (CO)', val: airCo[lastIndex], short: 'CO' },
-      ];
-      airItems.forEach(item => {
-        const li = document.createElement('li');
-        li.textContent = `${item.label} (${item.short}): ${formatAQ(item.val)} µg/m³`;
-        airList.appendChild(li);
-      });
-
-      // Graphique principal (temp, humidité, précipitations, pression)
-      if(mainChartInstance) mainChartInstance.destroy();
-      const ctxMain = document.getElementById("mainChart").getContext("2d");
-      mainChartInstance = new Chart(ctxMain, {
-        type: 'line',
-        data: {
-          labels,
-          datasets: [
-            {
-              label: "Température (°C)",
-              data: temps,
-              borderColor: "red",
-              backgroundColor: "transparent",
-              yAxisID: 'y1',
-              tension: 0.3,
-              fill: false,
-              pointRadius: 3,
-            },
-            {
-              label: "Humidité (%)",
-              data: humidities,
-              borderColor: "blue",
-              backgroundColor: "transparent",
-              yAxisID: 'y2',
-              tension: 0.3,
-              fill: false,
-              pointRadius: 3,
-            },
-            {
-              label: "Pluie + Neige (mm)",
-              data: rains.map((r,i) => r + snows[i]),
-              backgroundColor: "rgba(0,0,255,0.5)",
-              type: 'bar',
-              yAxisID: 'y3',
-              borderRadius: 4,
-            },
-            {
-              label: "Pression (hPa)",
-              data: pressures,
-              borderColor: "gray",
-              borderDash: [5,5],
-              fill: false,
-              yAxisID: 'y4',
-              tension: 0.3,
-              pointRadius: 2,
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          interaction: { mode: 'index', intersect: false },
-          stacked: false,
-          scales: {
-            y1: {
-              type: 'linear',
-              position: 'left',
-              title: { display: true, text: 'Température (°C)' },
-              grid: { drawOnChartArea: true },
-              beginAtZero: false,
-            },
-            y2: {
-              type: 'linear',
-              position: 'right',
-              offset: true,
-              title: { display: true, text: 'Humidité (%)' },
-              grid: { drawOnChartArea: false },
-              beginAtZero: true,
-              max: 100,
-            },
-            y3: {
-              type: 'linear',
-              position: 'right',
-              offset: true,
-              title: { display: true, text: 'Précipitations (mm)' },
-              grid: { drawOnChartArea: false },
-              beginAtZero: true,
-            },
-            y4: {
-              type: 'linear',
-              position: 'left',
-              offset: true,
-              title: { display: true, text: 'Pression (hPa)' },
-              grid: { drawOnChartArea: false },
-              beginAtZero: false,
-            }
-          },
-          plugins: {
-            legend: { position: 'top', labels: { boxWidth: 12, padding: 10 } },
-            tooltip: {
-              enabled: true, mode: 'nearest', intersect: false,
-              callbacks: {
-                label: context => {
-                  const label = context.dataset.label || '';
-                  let val = context.parsed.y;
-                  if(label.includes('Direction du vent')) {
-                    const deg = val;
-                    const card = degToCardinal(deg);
-                    return `${label}: ${deg}° (${card})`;
-                  }
-                  return label + ': ' + val;
-                }
-              }
-            }
-          }
-        }
-      });
-
-      // Graphique secondaire (vent, luminosité, UV)
-      if(windChartInstance) windChartInstance.destroy();
-      const ctxWind = document.getElementById("windChart").getContext("2d");
-      windChartInstance = new Chart(ctxWind, {
-        type: 'line',
-        data: {
-          labels,
-          datasets: [
-            {
-              label: "Vitesse du vent (km/h)",
-              data: winds,
-              borderColor: "#1f8ef1",
-              backgroundColor: "transparent",
-              yAxisID: 'y1',
-              tension: 0.3,
-              fill: false,
-              pointRadius: 3,
-            },
-            {
-              label: "Direction du vent (°)",
-              data: windDirs,
-              borderColor: "#555",
-              borderDash: [6,4],
-              yAxisID: 'y2',
-              fill: false,
-              tension: 0.3,
-              pointRadius: 2,
-            },
-            {
-              label: "Luminosité estimée (lux)",
-              data: lumens,
-              borderColor: "orange",
-              backgroundColor: "transparent",
-              yAxisID: 'y3',
-              tension: 0.3,
-              fill: false,
-              pointRadius: 3,
-            },
-            {
-              label: "Indice UV",
-              data: uvIndexes,
-              borderColor: "purple",
-              backgroundColor: "transparent",
-              yAxisID: 'y4',
-              tension: 0.3,
-              fill: false,
-              pointRadius: 3,
-            },
-          ]
-        },
-        options: {
-          responsive: true,
-          interaction: { mode: 'index', intersect: false },
-          stacked: false,
-          scales: {
-            y1: {
-              type: 'linear',
-              position: 'left',
-              title: { display: true, text: 'Vitesse (km/h)' },
-              beginAtZero: true,
-            },
-            y2: {
-              type: 'linear',
-              position: 'right',
-              offset: true,
-              title: { display: true, text: 'Direction (°)' },
-              beginAtZero: false,
-              min: 0,
-              max: 360,
-              grid: { drawOnChartArea: false },
-            },
-            y3: {
-              type: 'linear',
-              position: 'left',
-              offset: true,
-              title: { display: true, text: 'Luminosité (lux)' },
-              beginAtZero: true,
-              min: 0,
-              max: 120000,
-              grid: { drawOnChartArea: false },
-            },
-            y4: {
-              type: 'linear',
-              position: 'right',
-              offset: true,
-              title: { display: true, text: 'Indice UV' },
-              beginAtZero: true,
-              max: 11,
-              grid: { drawOnChartArea: false },
-            }
-          },
-          plugins: {
-            legend: { position: 'top', labels: { boxWidth: 12, padding: 10 } },
-            tooltip: {
-              enabled: true, mode: 'nearest', intersect: false,
-              callbacks: {
-                label: context => {
-                  const label = context.dataset.label || '';
-                  let val = context.parsed.y;
-                  if(label.includes('Direction du vent')) {
-                    const deg = val;
-                    const card = degToCardinal(deg);
-                    return `${label}: ${deg}° (${card})`;
-                  }
-                  return label + ': ' + val;
-                }
-              }
-            }
-          }
-        }
-      });
-
-      // Graphique qualité de l'air
-      if(airChartInstance) airChartInstance.destroy();
-      const ctxAir = document.getElementById("airChart").getContext("2d");
-      airChartInstance = new Chart(ctxAir, {
-        type: 'line',
-        data: {
-          labels,
-          datasets: [
-            {
-              label: 'PM2.5 (µg/m³)',
-              data: airPm25,
-              borderColor: '#d9534f',
-              fill: false,
-              tension: 0.3,
-              pointRadius: 2,
-            },
-            {
-              label: 'PM10 (µg/m³)',
-              data: airPm10,
-              borderColor: '#f0ad4e',
-              fill: false,
-              tension: 0.3,
-              pointRadius: 2,
-            },
-            {
-              label: 'O3 (µg/m³)',
-              data: airO3,
-              borderColor: '#5bc0de',
-              fill: false,
-              tension: 0.3,
-              pointRadius: 2,
-            },
-            {
-              label: 'NO2 (µg/m³)',
-              data: airNo2,
-              borderColor: '#5cb85c',
-              fill: false,
-              tension: 0.3,
-              pointRadius: 2,
-            },
-            {
-              label: 'SO2 (µg/m³)',
-              data: airSo2,
-              borderColor: '#337ab7',
-              fill: false,
-              tension: 0.3,
-              pointRadius: 2,
-            },
-            {
-              label: 'CO (µg/m³)',
-              data: airCo,
-              borderColor: '#777',
-              fill: false,
-              tension: 0.3,
-              pointRadius: 2,
-            },
-          ]
-        },
-        options: {
-          responsive: true,
-          interaction: { mode: 'index', intersect: false },
-          stacked: false,
-          scales: {
-            y: {
-              beginAtZero: true,
-              title: { display: true, text: 'Concentration (µg/m³)' }
-            }
-          },
-          plugins: {
-            legend: { position: 'top', labels: { boxWidth: 12, padding: 10 } },
-            tooltip: { enabled: true }
-          }
-        }
-      });
-
-    } catch (e) {
-      console.error("Erreur récupération prévisions :", e);
-      alert("Erreur lors de la récupération des prévisions météo.");
     }
-  }
 
-  fetchWeather();
-  fetchForecast();
-
-  // Ajuster les animations quand fenêtre redimensionnée
-  window.addEventListener('resize', () => {
     fetchWeather();
-  });
-</script>
+    fetchForecast();
+
+    window.addEventListener('resize', () => {
+      fetchWeather();
+    });
+  </script>
 </body>
 </html>
