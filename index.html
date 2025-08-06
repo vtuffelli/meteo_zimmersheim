@@ -7,22 +7,19 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body, html {
-      margin: 0;
-      padding: 0;
+      margin: 0; padding: 0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: linear-gradient(to bottom, #87ceeb, #f0f8ff);
       color: #222;
       overflow-x: hidden;
     }
-
     #background-anim {
       position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
+      top:0; left:0; right:0; bottom:0;
       z-index: -1;
       pointer-events: none;
       overflow: hidden;
     }
-
     .cloud {
       position: absolute;
       background: linear-gradient(to bottom, #f0f4f8, #cbd6e8);
@@ -31,29 +28,24 @@
       animation: cloudMove linear infinite;
       opacity: 0.8;
     }
-
     .cloud::before, .cloud::after {
       content: '';
       position: absolute;
       background: inherit;
       border-radius: 50px;
     }
-
     .cloud::before {
       width: 60px; height: 60px;
       top: -30px; left: 10px;
     }
-
     .cloud::after {
       width: 50px; height: 50px;
       top: -20px; left: 45px;
     }
-
     @keyframes cloudMove {
       0% { left: -150px; }
       100% { left: 110vw; }
     }
-
     .rain {
       position: absolute;
       width: 2px; height: 15px;
@@ -61,12 +53,10 @@
       border-radius: 50%;
       animation: rainFall linear infinite;
     }
-
     @keyframes rainFall {
       0% { top: -20px; opacity: 1; }
       100% { top: 110vh; opacity: 0; }
     }
-
     .snow {
       position: absolute;
       width: 8px; height: 8px;
@@ -75,20 +65,15 @@
       filter: drop-shadow(0 0 1px #aaa);
       animation: snowFall linear infinite;
     }
-
     @keyframes snowFall {
       0% { top: -10px; opacity: 1; transform: translateX(0); }
       100% { top: 110vh; opacity: 0; transform: translateX(20px); }
     }
 
     #container {
-      display: flex;
-      max-width: 1200px;
-      margin: 30px auto;
-      gap: 20px;
+      display: flex; max-width: 1200px; margin: 30px auto; gap: 20px;
       flex-wrap: wrap;
     }
-
     #left-panel {
       flex: 1 1 350px;
       background: rgba(255,255,255,0.9);
@@ -97,50 +82,44 @@
       box-shadow: 0 0 30px rgba(0,0,0,0.1);
       user-select: none;
     }
-
     #right-panel {
       flex: 1 1 600px;
       border-radius: 15px;
       overflow: hidden;
       box-shadow: 0 0 30px rgba(0,0,0,0.1);
-      background: rgba(255,255,255,0.95);
-      padding: 20px;
     }
-
+    #right-panel iframe {
+      width: 100%; height: 300px; border: none;
+    }
     h1, h2 {
-      margin-bottom: 15px;
-      user-select: none;
+      margin-bottom: 15px; user-select: none;
       text-align: center;
     }
-
     .info-row {
       margin: 10px 0;
       font-size: 1.1rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      display: flex; align-items: center; justify-content: space-between;
     }
-
     .label {
       font-weight: 700;
       color: #555;
     }
 
-    #condition-icon {
-      display: block;
-      margin: 10px auto;
-      width: 100px; height: 100px;
+    #icon-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+      margin: 10px 0;
     }
 
-    #wind-arrow {
-      display: inline-block;
-      width: 24px; height: 24px;
-      margin-left: 8px;
-      vertical-align: middle;
-      transition: transform 0.3s ease;
+    #condition-icon,
+    #moon-icon {
+      width: 100px;
+      height: 100px;
     }
 
-    section.chart-section {
+    .chart-section {
       background: rgba(255,255,255,0.95);
       margin: 30px auto;
       max-width: 1200px;
@@ -154,19 +133,20 @@
       width: 100% !important;
       max-height: 400px !important;
     }
-
-    .moon-phase {
-      font-size: 2.5rem;
-      margin: 0 auto;
-    }
   </style>
 </head>
 <body>
   <div id="background-anim"></div>
+
   <div id="container">
     <div id="left-panel">
       <h1>Météo actuelle - Zimmersheim</h1>
-      <img id="condition-icon" src="" alt="Icône météo" />
+
+      <div id="icon-container">
+        <img id="condition-icon" src="" alt="Icône météo" />
+        <img id="moon-icon" src="" alt="Phase lunaire" />
+      </div>
+
       <div class="info-row"><span class="label">Condition :</span> <span id="description"></span></div>
       <div class="info-row"><span class="label">Température :</span> <span id="temp"></span> °C</div>
       <div class="info-row"><span class="label">Humidité :</span> <span id="humidity"></span> %</div>
@@ -183,62 +163,49 @@
       <div class="info-row"><span class="label">Direction vent :</span> <span id="wind-dir"></span></div>
       <div class="info-row"><span class="label">Lever du soleil :</span> <span id="sunrise"></span></div>
       <div class="info-row"><span class="label">Coucher du soleil :</span> <span id="sunset"></span></div>
-      <div class="info-row"><span class="label">Ensoleillement :</span> <span id="sunlight"></span> %</div>
-      <div class="info-row"><span class="label">Indice UV :</span> <span id="uv-index"></span></div>
-      <div class="info-row" style="flex-direction: column; text-align: center; margin-top: 20px;">
-        <div class="moon-phase" id="moon-phase">🌕</div>
-        <div id="moon-phase-desc" style="font-size: 1rem; color: #555;">Pleine lune</div>
-      </div>
-    </div>
+
+      <div class="info-row"><span class="label">☀️ Ensoleillement estimé :</span> <span id="sunlight"></span> %</div>
+      <div class="info-row"><span class="label">🔆 Indice UV :</span> <span id="uv-index"></span></div>
+      <div class="info-row"><span class="label">🌙 <strong>Phase lunaire :</strong></span> <span id="moon-desc"></span></div>
+
+          </div>
+
     <div id="right-panel">
-      <h2 style="text-align:center; padding: 10px 0;">Qualité de l'air - Zimmersheim</h2>
-      <div id="air-quality-details"></div>
+      <h2 style="text-align:center; padding: 10px 0;">Qualité de l’air - Zimmersheim</h2>
+      <div id="air-quality" style="padding: 10px 20px; font-size: 1rem;">
+        <!-- Données air dynamique -->
+      </div>
     </div>
   </div>
 
-    <section class="chart-section">
+  <section class="chart-section">
     <h2>📊 Graphique principal</h2>
     <canvas id="mainChart"></canvas>
   </section>
 
   <section class="chart-section">
-    <h2>📊 Graphique secondaire (vent)</h2>
+    <h2>📊 Graphique secondaire (vent, UV, ensoleillement)</h2>
     <canvas id="windChart"></canvas>
   </section>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     const apiKey = "f59e1314a26b162f41dabbc7bb2b7719";
     const city = "Zimmersheim,fr";
     const units = "metric";
     const lang = "fr";
 
+    let sunlightEstimate = 0;
+    let uvValue = 0;
+
     function degToCardinal(deg) {
-      const dirs = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
-                    "S", "SSO", "SO", "OSO", "O", "ONO", "NO", "NNO"];
-      return dirs[Math.round(deg / 22.5) % 16];
+      const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'];
+      return dirs[Math.round(deg / 45) % 8];
     }
 
     function formatTime(ts) {
-      return new Date(ts * 1000).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    }
-
-    function getMoonPhaseWithDescription(date) {
-      const lp = 2551443;
-      const new_moon = new Date(1970,0,7,20,35,0);
-      const phase = ((date.getTime() - new_moon.getTime())/1000) % lp;
-      const percent = (phase / lp);
-      const index = Math.floor(percent * 8);
-      const phases = [
-        { icon: '🌑', label: 'Nouvelle lune' },
-        { icon: '🌒', label: 'Premier croissant' },
-        { icon: '🌓', label: 'Premier quartier' },
-        { icon: '🌔', label: 'Lune gibbeuse croissante' },
-        { icon: '🌕', label: 'Pleine lune' },
-        { icon: '🌖', label: 'Lune gibbeuse décroissante' },
-        { icon: '🌗', label: 'Dernier quartier' },
-        { icon: '🌘', label: 'Dernier croissant' }
-      ];
-      return phases[index];
+      const d = new Date(ts * 1000);
+      return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
     }
 
     async function fetchWeather() {
@@ -249,194 +216,141 @@
       document.getElementById("temp").textContent = Math.round(data.main.temp);
       document.getElementById("humidity").textContent = data.main.humidity;
       document.getElementById("pressure").textContent = data.main.pressure;
-      document.getElementById("precip").textContent =
-        data.rain?.["1h"] || data.snow?.["1h"] ? ((data.rain?.["1h"] || 0) + (data.snow?.["1h"] || 0)).toFixed(1) + " mm" : "Aucune";
+
+      let precip = 0;
+      if (data.rain?.["1h"]) precip += data.rain["1h"];
+      if (data.snow?.["1h"]) precip += data.snow["1h"];
+      document.getElementById("precip").textContent = precip > 0 ? precip.toFixed(1) + " mm" : "Aucune";
+
+      const deg = data.wind.deg;
       document.getElementById("wind").textContent = Math.round(data.wind.speed * 3.6);
-      document.getElementById("wind-dir").textContent = `${degToCardinal(data.wind.deg)} (${data.wind.deg}°)`;
+      document.getElementById("wind-dir").textContent = `${degToCardinal(deg)} (${deg}°)`;
+      document.getElementById("wind-arrow").style.transform = `rotate(${deg}deg)`;
+
       document.getElementById("sunrise").textContent = formatTime(data.sys.sunrise);
       document.getElementById("sunset").textContent = formatTime(data.sys.sunset);
-      document.getElementById("condition-icon").src = `https://openweathermap.org/img/wn/${data.weather[0].icon}@4x.png`;
 
-      // Luminosité estimée corrigée par couverture nuageuse
-      const isDay = (Date.now() / 1000 > data.sys.sunrise) && (Date.now() / 1000 < data.sys.sunset);
-      const baseSun = isDay ? 100 : 0;
-      const clouds = data.clouds?.all || 0;
-      const sunAdj = Math.max(0, baseSun * (1 - clouds / 100));
-      document.getElementById("sunlight").textContent = Math.round(sunAdj);
+      const icon = data.weather[0].icon;
+      document.getElementById("condition-icon").src = `https://openweathermap.org/img/wn/${icon}@4x.png`;
 
-      // Lune
-      const moon = getMoonPhaseWithDescription(new Date());
-      document.getElementById("moon-phase").textContent = moon.icon;
-      document.getElementById("moon-phase-desc").textContent = moon.label;
+      const now = new Date();
+      const sunrise = new Date(data.sys.sunrise * 1000);
+      const sunset = new Date(data.sys.sunset * 1000);
+      const isDay = now > sunrise && now < sunset;
+      const cloudiness = data.clouds.all;
+      sunlightEstimate = isDay ? Math.round((100 - cloudiness) * 0.9) : 0;
+      document.getElementById("sunlight").textContent = sunlightEstimate;
+
+      // Anim météo
+      const main = data.weather[0].main.toLowerCase();
+      clearAnimations();
+      if (main.includes("rain")) createRain();
+      else if (main.includes("snow")) createSnow();
+      else if (main.includes("cloud")) createClouds();
+
+      // Phase lunaire
+      fetchMoonPhase();
+      // UV
+      fetchUV(data.coord.lat, data.coord.lon);
+      // Air quality
+      fetchAirQuality(data.coord.lat, data.coord.lon);
     }
 
-    async function fetchUV() {
-      const res = await fetch(`https://api.openweathermap.org/data/2.5/uvi?lat=47.7746&lon=7.3373&appid=${apiKey}`);
+    async function fetchMoonPhase() {
+      const today = new Date();
+      const yyyy = today.getUTCFullYear();
+      const mm = String(today.getUTCMonth() + 1).padStart(2, '0');
+      const dd = String(today.getUTCDate()).padStart(2, '0');
+
+      const res = await fetch(`https://api.farmsense.net/v1/moonphases/?d=${yyyy}-${mm}-${dd}`);
       const data = await res.json();
-      document.getElementById("uv-index").textContent = data.value;
+      const phase = data[0]?.Phase || "Inconnue";
+
+      document.getElementById("moon-desc").textContent = phase;
+      document.getElementById("moon-icon").src = `https://www.astrolabsoftware.com/moon-icons/${phase.toLowerCase().replace(/\s/g, '-')}.gif`;
     }
 
-    async function fetchAir() {
-      const res = await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=47.7746&lon=7.3373&appid=${apiKey}`);
+    async function fetchUV(lat, lon) {
+      const res = await fetch(`https://api.openweathermap.org/data/2.5/uvi?appid=${apiKey}&lat=${lat}&lon=${lon}`);
       const data = await res.json();
-      const a = data.list[0].components;
+      uvValue = data.value;
+      document.getElementById("uv-index").textContent = uvValue;
+    }
 
-      const desc = {
-        co: 'CO (monoxyde de carbone)',
-        no: 'NO (monoxyde d\'azote)',
-        no2: 'NO₂ (dioxyde d\'azote)',
-        o3: 'O₃ (ozone)',
-        so2: 'SO₂ (dioxyde de soufre)',
-        pm2_5: 'PM2.5 (particules fines)',
-        pm10: 'PM10 (grosses particules)',
-        nh3: 'NH₃ (ammoniac)'
+    async function fetchAirQuality(lat, lon) {
+      const res = await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${apiKey}`);
+      const data = await res.json();
+      const aqi = data.list[0];
+      const components = aqi.components;
+
+      const interpret = (key, val) => {
+        const labels = {
+          pm2_5: "PM2.5 (particules fines)",
+          pm10: "PM10 (grosses particules)",
+          o3: "O₃ (ozone)",
+          no2: "NO₂ (dioxyde d’azote)",
+          so2: "SO₂ (dioxyde de soufre)",
+          co: "CO (monoxyde de carbone)"
+        };
+        return `<div><strong>${labels[key]}</strong> : ${val} µg/m³ ${qualityLabel(key, val)}</div>`;
       };
 
-      const html = Object.entries(a).map(([key, val]) =>
-        `<div><b>${desc[key] || key}</b> : ${val} µg/m³ ${interpretAirQuality(key, val)}</div>`
-      ).join("");
-      document.getElementById("air-quality-details").innerHTML = html;
-    }
-
-    function interpretAirQuality(key, val) {
-      const ranges = {
-        pm2_5: [10, 20, 25, 50], pm10: [20, 40, 50, 100],
-        o3: [50, 100, 130, 240], no2: [40, 90, 120, 230],
-        so2: [50, 100, 150, 500], co: [1000, 2000, 5000, 10000]
+      const qualityLabel = (key, val) => {
+        const ranges = {
+          pm2_5: [10, 20, 25, 50],
+          pm10: [20, 40, 50, 100],
+          o3: [60, 120, 180, 240],
+          no2: [50, 100, 200, 400],
+          so2: [100, 200, 350, 500],
+          co: [4400, 9400, 12400, 15400]
+        };
+        const level = ranges[key].findIndex(r => val < r);
+        return ["(Bonne)", "(Moyenne)", "(Dégradée)", "(Mauvaise)", "(Très mauvaise)"][level >= 0 ? level : 4];
       };
 
-      const labels = [' (Bonne)', ' (Acceptable)', ' (Médiocre)', ' (Mauvaise)', ' (Dangereuse)'];
-      const thresholds = ranges[key];
-      if (!thresholds) return '';
-      const i = thresholds.findIndex(t => val < t);
-      return labels[i >= 0 ? i : labels.length - 1];
+      const div = document.getElementById("air-quality");
+      div.innerHTML = Object.entries(components)
+        .filter(([k]) => ['pm2_5','pm10','o3','no2','so2','co'].includes(k))
+        .map(([k,v]) => interpret(k,v)).join("");
     }
 
-    async function fetchForecast() {
-      const res = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=${units}&lang=${lang}`);
-      const data = await res.json();
-
-      const labels = [];
-      const temps = [];
-      const humidities = [];
-      const pressures = [];
-      const rains = [];
-      const snows = [];
-      const winds = [];
-      const windDirs = [];
-
-      data.list.forEach(item => {
-        const date = new Date(item.dt * 1000);
-        labels.push(date.toLocaleString('fr-FR', { weekday: 'short', hour: '2-digit', minute: '2-digit' }));
-        temps.push(item.main.temp);
-        humidities.push(item.main.humidity);
-        pressures.push(item.main.pressure);
-        rains.push(item.rain?.["3h"] || 0);
-        snows.push(item.snow?.["3h"] || 0);
-        winds.push(item.wind.speed * 3.6);
-        windDirs.push(item.wind.deg);
-      });
-
-      // Chart principal
-      new Chart(document.getElementById("mainChart").getContext("2d"), {
-        type: 'line',
-        data: {
-          labels,
-          datasets: [
-            {
-              label: "Température (°C)",
-              data: temps,
-              borderColor: "red",
-              yAxisID: 'y1',
-              tension: 0.3,
-              pointRadius: 2
-            },
-            {
-              label: "Humidité (%)",
-              data: humidities,
-              borderColor: "blue",
-              yAxisID: 'y2',
-              tension: 0.3,
-              pointRadius: 2
-            },
-            {
-              label: "Précipitations (mm)",
-              data: rains.map((r, i) => r + snows[i]),
-              type: 'bar',
-              backgroundColor: "rgba(0,0,255,0.3)",
-              yAxisID: 'y3',
-              borderRadius: 4,
-            },
-            {
-              label: "Pression (hPa)",
-              data: pressures,
-              borderColor: "gray",
-              borderDash: [5,5],
-              yAxisID: 'y4',
-              tension: 0.3,
-              pointRadius: 2
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          stacked: false,
-          scales: {
-            y1: { type: 'linear', position: 'left', title: { text: 'Température (°C)', display: true }},
-            y2: { type: 'linear', position: 'right', title: { text: 'Humidité (%)', display: true }, max: 100 },
-            y3: { type: 'linear', position: 'right', offset: true, title: { text: 'Précipitations (mm)', display: true }},
-            y4: { type: 'linear', position: 'left', offset: true, title: { text: 'Pression (hPa)', display: true }}
-          }
-        }
-      });
-
-      // Chart secondaire (vent) — RESTAURÉ
-      new Chart(document.getElementById("windChart").getContext("2d"), {
-        type: 'line',
-        data: {
-          labels,
-          datasets: [
-            {
-              label: "Vent (km/h)",
-              data: winds,
-              borderColor: "green",
-              yAxisID: 'y',
-              tension: 0.3,
-              pointRadius: 2
-            },
-            {
-              label: "Direction du vent (°)",
-              data: windDirs,
-              borderColor: "orange",
-              yAxisID: 'y2',
-              tension: 0.3,
-              pointRadius: 2
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          stacked: false,
-          scales: {
-            y: { type: 'linear', position: 'left', title: { display: true, text: 'Vent (km/h)' }, beginAtZero: true },
-            y2: {
-              type: 'linear',
-              position: 'right',
-              title: { display: true, text: 'Direction (°)' },
-              min: 0, max: 360,
-              ticks: {
-                callback: val => ['N','NE','E','SE','S','SO','O','NO'][Math.round(val / 45) % 8]
-              }
-            }
-          }
-        }
-      });
+    // Animation météo
+    function clearAnimations() {
+      document.getElementById("background-anim").innerHTML = "";
+    }
+    function createClouds() { for (let i=0;i<5;i++) addCloud(i); }
+    function addCloud(i) {
+      const c = document.createElement('div');
+      c.className = 'cloud';
+      c.style.top = (20 + i*50) + 'px';
+      c.style.width = (80 + Math.random()*60) + 'px';
+      c.style.height = '50px';
+      c.style.animationDuration = (30 + Math.random()*40) + 's';
+      c.style.animationDelay = (-Math.random()*60) + 's';
+      document.getElementById('background-anim').appendChild(c);
+    }
+    function createRain() {
+      for (let i=0;i<50;i++) {
+        const d = document.createElement('div');
+        d.className = 'rain';
+        d.style.left = (Math.random() * window.innerWidth) + 'px';
+        d.style.animationDuration = (0.5 + Math.random()*0.5) + 's';
+        d.style.animationDelay = (-Math.random()*1) + 's';
+        document.getElementById('background-anim').appendChild(d);
+      }
+    }
+    function createSnow() {
+      for (let i=0;i<40;i++) {
+        const f = document.createElement('div');
+        f.className = 'snow';
+        f.style.left = (Math.random() * window.innerWidth) + 'px';
+        f.style.animationDuration = (3 + Math.random()*4) + 's';
+        f.style.animationDelay = (-Math.random()*7) + 's';
+        document.getElementById('background-anim').appendChild(f);
+      }
     }
 
     fetchWeather();
-    fetchForecast();
-    fetchUV();
-    fetchAir();
   </script>
 </body>
 </html>
