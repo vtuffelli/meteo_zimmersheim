@@ -275,7 +275,7 @@
 
   async function fetchWeather() {
     try {
-      const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=${units}&lang=${lang}`);
+      const res = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=${units}&lang=${lang}`);
       const data = await res.json();
 
       document.getElementById("description").textContent = data.weather[0].description;
