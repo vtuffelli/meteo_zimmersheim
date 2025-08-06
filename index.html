@@ -3,12 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Météo complète Zimmersheim</title>
+  <title>Météo complète Zimmersheim - améliorée</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body, html {
-      margin: 0;
-      padding: 0;
+      margin: 0; padding: 0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: linear-gradient(to bottom, #87ceeb, #f0f8ff);
       color: #222;
@@ -17,7 +16,7 @@
 
     #background-anim {
       position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
+      top:0; left:0; right:0; bottom:0;
       z-index: -1;
       pointer-events: none;
       overflow: hidden;
@@ -38,10 +37,12 @@
       background: inherit;
       border-radius: 50px;
     }
+
     .cloud::before {
       width: 60px; height: 60px;
       top: -30px; left: 10px;
     }
+
     .cloud::after {
       width: 50px; height: 50px;
       top: -20px; left: 45px;
@@ -80,14 +81,12 @@
     }
 
     .stars {
-      background: black;
-      background-image: radial-gradient(white 1px, transparent 1px);
-      background-size: 4px 4px;
-      opacity: 0.15;
-      width: 100%;
-      height: 100%;
+      background: url('https://upload.wikimedia.org/wikipedia/commons/8/8e/Starry_sky_background.png');
       position: absolute;
-      z-index: -2;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-size: cover;
+      opacity: 0.3;
+      animation: pulse 20s infinite;
     }
 
     .moon {
@@ -95,10 +94,21 @@
       width: 80px;
       height: 80px;
       border-radius: 50%;
-      background: radial-gradient(circle at 30% 30%, #fff, #ddd);
+      background: radial-gradient(circle at 30% 30%, #fff, #ccc);
       top: 40px;
-      right: 50px;
-      z-index: -1;
+      left: 80vw;
+      box-shadow: 0 0 15px #fff;
+      animation: float 6s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.5; }
     }
 
     #container {
@@ -126,23 +136,18 @@
     }
 
     #right-panel iframe {
-      width: 100%;
-      height: 300px;
-      border: none;
+      width: 100%; height: 300px; border: none;
     }
 
     h1, h2 {
-      margin-bottom: 15px;
+      margin-bottom: 15px; user-select: none;
       text-align: center;
-      user-select: none;
     }
 
     .info-row {
       margin: 10px 0;
       font-size: 1.1rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      display: flex; align-items: center; justify-content: space-between;
     }
 
     .label {
@@ -153,17 +158,7 @@
     #condition-icon {
       display: block;
       margin: 10px auto;
-      width: 100px;
-      height: 100px;
-    }
-
-    #wind-arrow {
-      display: inline-block;
-      width: 24px;
-      height: 24px;
-      margin-left: 8px;
-      vertical-align: middle;
-      transition: transform 0.3s ease;
+      width: 100px; height: 100px;
     }
 
     section.chart-section {
@@ -204,17 +199,22 @@
       <div class="info-row"><span class="label">Direction vent :</span> <span id="wind-dir"></span></div>
       <div class="info-row"><span class="label">Lever du soleil :</span> <span id="sunrise"></span></div>
       <div class="info-row"><span class="label">Coucher du soleil :</span> <span id="sunset"></span></div>
-      <div class="info-row"><span class="label">Luminosité estimée :</span> <span id="luminosity">...</span> %</div>
-      <div class="info-row"><span class="label">Phase de lune :</span> <span id="moon-phase">...</span></div>
-      <div class="info-row"><span class="label">Indice UV :</span> <span id="uv-index">...</span></div>
-      <div class="info-row"><span class="label">Qualité de l’air :</span> <span id="air-quality">...</span></div>
+      <div class="info-row"><span class="label">Luminosité estimée :</span> <span id="luminosity"></span> %</div>
+      <div class="info-row"><span class="label">Phase de lune :</span> <span id="moon-phase"></span></div>
+      <div class="info-row"><span class="label">Qualité de l'air :</span> <span id="air-quality"></span></div>
+      <div class="info-row"><span class="label">PM2.5 :</span> <span id="pm25"></span> µg/m³</div>
+      <div class="info-row"><span class="label">PM10 :</span> <span id="pm10"></span> µg/m³</div>
+      <div class="info-row"><span class="label">O₃ :</span> <span id="o3"></span> µg/m³</div>
+      <div class="info-row"><span class="label">NO₂ :</span> <span id="no2"></span> µg/m³</div>
+      <div class="info-row"><span class="label">SO₂ :</span> <span id="so2"></span> µg/m³</div>
+      <div class="info-row"><span class="label">CO :</span> <span id="co"></span> µg/m³</div>
     </div>
     <div id="right-panel">
 
-            <h2 style="text-align:center; padding: 10px 0;">Vue satellite - Zimmersheim</h2>
+      <h2 style="text-align:center; padding: 10px 0;">Vue satellite - Zimmersheim</h2>
       <iframe
         id="map-frame"
-        src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d2777.8758572121094!2d7.337325815711999!3d47.7745615792057!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sfr!2sfr!4v1691246400000!5m2!1sfr!2sfr&layer=c"
+        src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d2777.8758572121094!2d7.3373!3d47.7745!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sfr!2sfr!4v1691246400000!5m2!1sfr!2sfr"
         allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade">
       </iframe>
     </div>
@@ -226,207 +226,168 @@
   </section>
 
   <section class="chart-section">
-    <h2>📊 Graphique secondaire (vent & luminosité)</h2>
+    <h2>📊 Graphique secondaire (vent, luminosité, UV)</h2>
     <canvas id="windChart"></canvas>
   </section>
 
-<script>
-const apiKey = "f59e1314a26b162f41dabbc7bb2b7719";
-const city = "Zimmersheim,fr";
-const units = "metric";
-const lang = "fr";
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const apiKey = "f59e1314a26b162f41dabbc7bb2b7719";
+    const city = "Zimmersheim,fr";
 
-function formatTime(unix) {
-  const date = new Date(unix * 1000);
-  return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-}
+    async function fetchAllData() {
+      try {
+        const weatherRes = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&lang=fr&appid=${apiKey}`);
+        const weatherData = await weatherRes.json();
 
-function degToCardinal(deg) {
-  const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSO','SO','OSO','O','ONO','NO','NNO'];
-  return dirs[Math.round(deg / 22.5) % 16];
-}
+        const airRes = await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${weatherData.coord.lat}&lon=${weatherData.coord.lon}&appid=${apiKey}`);
+        const airData = await airRes.json();
 
-function getMoonPhase(date) {
-  const synodicMonth = 29.530588853;
-  const newMoon = new Date(Date.UTC(2000, 0, 6, 18, 14));
-  const diff = (date.getTime() - newMoon.getTime()) / 86400000;
-  const phase = (diff % synodicMonth) / synodicMonth;
-  if (phase < 0.03 || phase > 0.97) return "🌑 Nouvelle lune";
-  if (phase < 0.22) return "🌒 Premier croissant";
-  if (phase < 0.28) return "🌓 Premier quartier";
-  if (phase < 0.47) return "🌔 Gibbeuse croissante";
-  if (phase < 0.53) return "🌕 Pleine lune";
-  if (phase < 0.72) return "🌖 Gibbeuse décroissante";
-  if (phase < 0.78) return "🌗 Dernier quartier";
-  return "🌘 Dernier croissant";
-}
+        const uvRes = await fetch(`https://api.openweathermap.org/data/2.5/uvi?appid=${apiKey}&lat=${weatherData.coord.lat}&lon=${weatherData.coord.lon}`);
+        const uvData = await uvRes.json();
 
-function isNight(now, sunrise, sunset) {
-  return now < sunrise || now > sunset;
-}
+        const icon = weatherData.weather[0].icon;
+        const condition = weatherData.weather[0].description;
+        const temp = weatherData.main.temp;
+        const humidity = weatherData.main.humidity;
+        const pressure = weatherData.main.pressure;
+        const windSpeed = weatherData.wind.speed * 3.6;
+        const windDeg = weatherData.wind.deg;
+        const sunrise = new Date(weatherData.sys.sunrise * 1000);
+        const sunset = new Date(weatherData.sys.sunset * 1000);
+        const now = new Date();
 
-async function fetchWeather() {
-  const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=${units}&lang=${lang}`);
-  const data = await res.json();
+        // Luminosité estimée corrigée avec nébulosité
+        const daylightRatio = (now > sunrise && now < sunset) ? 1 : 0;
+        const cloudFactor = 1 - (weatherData.clouds.all / 100);
+        const luminosity = Math.round(100 * daylightRatio * cloudFactor);
+        document.getElementById("luminosity").textContent = luminosity;
 
-  const icon = document.getElementById("condition-icon");
-  document.getElementById("description").textContent = data.weather[0].description;
-  document.getElementById("temp").textContent = Math.round(data.main.temp);
-  document.getElementById("humidity").textContent = data.main.humidity;
-  document.getElementById("pressure").textContent = data.main.pressure;
-  document.getElementById("wind").textContent = Math.round(data.wind.speed * 3.6);
-  document.getElementById("wind-dir").textContent = `${degToCardinal(data.wind.deg)} (${data.wind.deg}°)`;
+        document.getElementById("condition-icon").src = `https://openweathermap.org/img/wn/${icon}@4x.png`;
+        document.getElementById("description").textContent = condition;
+        document.getElementById("temp").textContent = Math.round(temp);
+        document.getElementById("humidity").textContent = humidity;
+        document.getElementById("pressure").textContent = pressure;
+        document.getElementById("wind").textContent = Math.round(windSpeed);
+        document.getElementById("wind-dir").textContent = `${windDeg}°`;
+        document.getElementById("sunrise").textContent = sunrise.toLocaleTimeString('fr-FR');
+        document.getElementById("sunset").textContent = sunset.toLocaleTimeString('fr-FR');
 
-  icon.src = `https://openweathermap.org/img/wn/${data.weather[0].icon}@4x.png`;
-  icon.alt = data.weather[0].description;
+        // Phase de lune approximative
+        const moonPhase = getMoonPhase(now);
+        document.getElementById("moon-phase").textContent = moonPhase;
 
-  const sunrise = data.sys.sunrise * 1000;
-  const sunset = data.sys.sunset * 1000;
-  const now = Date.now();
+        // Qualité de l'air
+        const air = airData.list[0];
+        document.getElementById("air-quality").textContent = air.main.aqi + " / 5";
+        document.getElementById("pm25").textContent = air.components.pm2_5;
+        document.getElementById("pm10").textContent = air.components.pm10;
+        document.getElementById("o3").textContent = air.components.o3;
+        document.getElementById("no2").textContent = air.components.no2;
+        document.getElementById("so2").textContent = air.components.so2;
+        document.getElementById("co").textContent = air.components.co;
 
-  document.getElementById("sunrise").textContent = formatTime(data.sys.sunrise);
-  document.getElementById("sunset").textContent = formatTime(data.sys.sunset);
+        // UV
+        const uv = uvData.value || 0;
 
-  const clouds = data.clouds.all;
-  const isNightTime = isNight(now, sunrise, sunset);
-  const luminosity = isNightTime ? 0 : Math.round((1 - clouds / 100) * 100);
-  document.getElementById("luminosity").textContent = luminosity;
+        // Graphique secondaire
+        const ctx = document.getElementById("windChart").getContext("2d");
+        new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: ["Maintenant"],
+            datasets: [
+              {
+                label: "Vent (km/h)",
+                data: [windSpeed],
+                borderColor: "#1f8ef1",
+                tension: 0.3,
+                yAxisID: 'y1'
+              },
+              {
+                label: "Luminosité (%)",
+                data: [luminosity],
+                borderColor: "#ffc107",
+                tension: 0.3,
+                yAxisID: 'y2'
+              },
+              {
+                label: "Indice UV",
+                data: [uv],
+                borderColor: "#9c27b0",
+                tension: 0.3,
+                yAxisID: 'y3'
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            interaction: { mode: 'index', intersect: false },
+            stacked: false,
+            scales: {
+              y1: {
+                type: 'linear',
+                position: 'left',
+                title: { display: true, text: 'Vent (km/h)' },
+                beginAtZero: true
+              },
+              y2: {
+                type: 'linear',
+                position: 'right',
+                offset: true,
+                title: { display: true, text: 'Luminosité (%)' },
+                beginAtZero: true,
+                max: 100
+              },
+              y3: {
+                type: 'linear',
+                position: 'right',
+                offset: true,
+                title: { display: true, text: 'Indice UV' },
+                min: 0,
+                max: 11,
+                grid: { drawOnChartArea: false }
+              }
+            }
+          }
+        });
 
-  const moonText = getMoonPhase(new Date());
-  document.getElementById("moon-phase").textContent = moonText;
+        // Animation fond
+        const bg = document.getElementById("background-anim");
+        bg.innerHTML = '';
+        if (daylightRatio === 0) {
+          const stars = document.createElement('div');
+          stars.className = 'stars';
+          bg.appendChild(stars);
 
-  const precip = (data.rain?.["1h"] || 0) + (data.snow?.["1h"] || 0);
-  document.getElementById("precip").textContent = precip ? `${precip.toFixed(1)} mm` : "Aucune";
+          const moon = document.createElement('div');
+          moon.className = 'moon';
+          bg.appendChild(moon);
+        }
 
-  // Fond animé selon condition
-  const main = data.weather[0].main.toLowerCase();
-  const bg = document.getElementById("background-anim");
-  bg.innerHTML = "";
-
-  if (main.includes("rain")) {
-    for (let i = 0; i < 50; i++) {
-      const drop = document.createElement("div");
-      drop.className = "rain";
-      drop.style.left = Math.random() * window.innerWidth + "px";
-      drop.style.animationDuration = 0.5 + Math.random() + "s";
-      drop.style.animationDelay = -Math.random() + "s";
-      bg.appendChild(drop);
-    }
-  } else if (main.includes("snow")) {
-    for (let i = 0; i < 40; i++) {
-      const flake = document.createElement("div");
-      flake.className = "snow";
-      flake.style.left = Math.random() * window.innerWidth + "px";
-      flake.style.animationDuration = 3 + Math.random() * 4 + "s";
-      flake.style.animationDelay = -Math.random() * 7 + "s";
-      bg.appendChild(flake);
-    }
-  } else if (main.includes("cloud")) {
-    for (let i = 0; i < 5; i++) {
-      const cloud = document.createElement("div");
-      cloud.className = "cloud";
-      cloud.style.top = 20 + i * 50 + "px";
-      cloud.style.width = 80 + Math.random() * 60 + "px";
-      cloud.style.height = "50px";
-      cloud.style.animationDuration = 30 + Math.random() * 40 + "s";
-      cloud.style.animationDelay = -Math.random() * 60 + "s";
-      bg.appendChild(cloud);
-    }
-  } else if (isNightTime) {
-    const stars = document.createElement("div");
-    stars.className = "stars";
-    bg.appendChild(stars);
-    const moon = document.createElement("div");
-    moon.className = "moon";
-    bg.appendChild(moon);
-  }
-
-  return { luminosity };
-}
-
-async function fetchExtras() {
-  // UV & pollution
-  const res = await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=47.7745&lon=7.3373&appid=${apiKey}`);
-  const data = await res.json();
-  const quality = data.list[0].main.aqi;
-  const levels = ["Bon", "Acceptable", "Modéré", "Mauvais", "Très mauvais"];
-  document.getElementById("air-quality").textContent = levels[quality - 1] || "Inconnu";
-}
-
-async function fetchForecast(luminosityValue) {
-  const res = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=${units}&lang=${lang}`);
-  const data = await res.json();
-
-  const labels = [], temps = [], humidities = [], pressures = [], rains = [], snows = [], winds = [], windDirs = [], light = [];
-
-  data.list.forEach(item => {
-    const date = new Date(item.dt * 1000);
-    const hour = date.toLocaleString('fr-FR', { weekday: 'short', hour: '2-digit' });
-    labels.push(hour);
-
-    temps.push(item.main.temp);
-    humidities.push(item.main.humidity);
-    pressures.push(item.main.pressure);
-    rains.push(item.rain?.["3h"] || 0);
-    snows.push(item.snow?.["3h"] || 0);
-    winds.push(item.wind.speed * 3.6);
-    windDirs.push(item.wind.deg);
-
-    // estimation luminosité selon nébulosité + heure
-    const isNight = date.getHours() < 6 || date.getHours() > 21;
-    const lum = isNight ? 0 : Math.round((1 - (item.clouds.all / 100)) * 100);
-    light.push(lum);
-  });
-
-  new Chart(document.getElementById("mainChart"), {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [
-        { label: "Température (°C)", data: temps, borderColor: "red", tension: 0.3, yAxisID: "y1" },
-        { label: "Humidité (%)", data: humidities, borderColor: "blue", tension: 0.3, yAxisID: "y2" },
-        { label: "Pluie + Neige (mm)", data: rains.map((r, i) => r + snows[i]), type: 'bar', backgroundColor: "rgba(0,0,255,0.4)", yAxisID: "y3" },
-        { label: "Pression (hPa)", data: pressures, borderColor: "gray", borderDash: [4, 4], yAxisID: "y4" }
-      ]
-    },
-    options: {
-      responsive: true,
-      scales: {
-        y1: { type: "linear", position: "left", title: { display: true, text: "°C" } },
-        y2: { type: "linear", position: "right", offset: true, title: { display: true, text: "%" } },
-        y3: { type: "linear", position: "right", offset: true, title: { display: true, text: "mm" } },
-        y4: { type: "linear", position: "left", offset: true, title: { display: true, text: "hPa" } }
+      } catch (e) {
+        console.error("Erreur météo :", e);
       }
     }
-  });
 
-  new Chart(document.getElementById("windChart"), {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [
-        { label: "Vitesse du vent (km/h)", data: winds, borderColor: "#1f8ef1", tension: 0.3, yAxisID: "y1" },
-        { label: "Direction du vent (°)", data: windDirs, borderColor: "#777", borderDash: [4,4], tension: 0.3, yAxisID: "y2" },
-        { label: "Luminosité estimée (%)", data: light, borderColor: "#f7d600", tension: 0.3, yAxisID: "y3" }
-      ]
-    },
-    options: {
-      responsive: true,
-      scales: {
-        y1: { type: "linear", position: "left", title: { display: true, text: "km/h" } },
-        y2: { type: "linear", position: "right", title: { display: true, text: "°" }, min: 0, max: 360 },
-        y3: { type: "linear", position: "right", title: { display: true, text: "%" }, min: 0, max: 100, grid: { drawOnChartArea: false } }
-      }
+    // Moon phase calcul simple
+    function getMoonPhase(date) {
+      const lp = 2551443;
+      const now = date.getTime() / 1000;
+      const new_moon = new Date(2001, 0, 24, 13, 35, 0).getTime() / 1000;
+      const phase = ((now - new_moon) % lp) / lp;
+      if (phase < 0.03 || phase > 0.97) return "Nouvelle lune 🌑";
+      else if (phase < 0.22) return "Premier croissant 🌒";
+      else if (phase < 0.28) return "Premier quartier 🌓";
+      else if (phase < 0.47) return "Lune gibbeuse croissante 🌔";
+      else if (phase < 0.53) return "Pleine lune 🌕";
+      else if (phase < 0.72) return "Gibbeuse décroissante 🌖";
+      else if (phase < 0.78) return "Dernier quartier 🌗";
+      else return "Dernier croissant 🌘";
     }
-  });
-}
 
-(async () => {
-  const { luminosity } = await fetchWeather();
-  await fetchExtras();
-  await fetchForecast(luminosity);
-})();
-</script>
+    fetchAllData();
+  </script>
 </body>
 </html>
-
+      
