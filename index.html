@@ -12,13 +12,12 @@
     color: #222;
     overflow-x: hidden;
   }
-  /* Fond animé simplifié */
+  /* Fond animé simplifié avec canvas */
   #background-anim {
     position: fixed;
     top:0; left:0; right:0; bottom:0;
     z-index: -1;
     pointer-events: none;
-    overflow: hidden;
   }
   /* Nuages animés */
   .cloud {
@@ -94,8 +93,8 @@
     overflow: hidden;
     box-shadow: 0 0 30px rgba(0,0,0,0.1);
   }
-  #right-panel img {
-    width: 100%; height: 300px; object-fit: cover; border-radius: 15px;
+  #right-panel iframe {
+    width: 100%; height: 300px; border: none;
   }
   h1, h2 {
     margin-bottom: 15px; user-select: none;
@@ -137,18 +136,11 @@
     width: 100% !important;
     max-height: 400px !important;
   }
-
-  /* Echelle directions vent */
-  #wind-directions-scale {
-    text-align:center; margin-top:8px; font-size: 0.9rem; color: #555; user-select:none;
-  }
-
 </style>
 </head>
 <body>
 
-<div id="background-anim"></div>
-<canvas id="moon-phase-canvas" style="position: fixed; top:0; left:0; width:100vw; height:100vh; pointer-events:none; z-index:-2;"></canvas>
+<canvas id="background-anim"></canvas>
 
 <div id="container">
   <div id="left-panel">
@@ -177,11 +169,12 @@
 
   <div id="right-panel">
     <h2 style="text-align:center; padding: 10px 0;">Vue satellite - Zimmersheim</h2>
-    <img
-      id="satellite-image"
-      src="https://maps.googleapis.com/maps/api/staticmap?center=47.7746,7.3373&zoom=15&size=600x300&maptype=satellite&key=TA_CLE_API_GOOGLE_MAPS"
-      alt="Vue satellite Zimmersheim"
-    />
+    <!-- Google Maps satellite, zoom et vue large -->
+    <iframe
+      id="map-frame"
+      src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d2777.8758572121094!2d7.337325815711999!3d47.7745615792057!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sfr!2sfr!4v1691246400000!5m2!1sfr!2sfr&layer=c"
+      allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade">
+    </iframe>
   </div>
 </div>
 
@@ -191,14 +184,10 @@
 </section>
 
 <section class="chart-section">
-  <h2>📊 Graphique secondaire (vent)</h2>
+  <h2>📊 Graphique secondaire (vent & luminosité)</h2>
   <canvas id="windChart"></canvas>
-  <div id="wind-directions-scale">
-    N &nbsp;&nbsp;&nbsp;&nbsp; NNE &nbsp;&nbsp;&nbsp;&nbsp; NE &nbsp;&nbsp;&nbsp;&nbsp; ENE &nbsp;&nbsp;&nbsp;&nbsp; E &nbsp;&nbsp;&nbsp;&nbsp; ESE &nbsp;&nbsp;&nbsp;&nbsp; SE &nbsp;&nbsp;&nbsp;&nbsp; SSE &nbsp;&nbsp;&nbsp;&nbsp; S &nbsp;&nbsp;&nbsp;&nbsp; SSO &nbsp;&nbsp;&nbsp;&nbsp; SO &nbsp;&nbsp;&nbsp;&nbsp; OSO &nbsp;&nbsp;&nbsp;&nbsp; O &nbsp;&nbsp;&nbsp;&nbsp; ONO &nbsp;&nbsp;&nbsp;&nbsp; NO &nbsp;&nbsp;&nbsp;&nbsp; NNO
-  </div>
 </section>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
   const apiKey = "f59e1314a26b162f41dabbc7bb2b7719"; // Remplace par ta clé OpenWeatherMap
   const city = "Zimmersheim,fr";
@@ -209,6 +198,19 @@
   const windArrow = document.getElementById('wind-arrow');
   const windDirSpan = document.getElementById('wind-dir');
 
+  // Canvas lune
+  const bgCanvas = document.getElementById('background-anim');
+  const bgCtx = bgCanvas.getContext('2d');
+
+  // Ajuste taille canvas plein écran
+  function resizeCanvas() {
+    bgCanvas.width = window.innerWidth;
+    bgCanvas.height = window.innerHeight;
+  }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  // Conversion degrés en direction cardinal
   function degToCardinal(deg) {
     if (deg == null) return "N/A";
     const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE',
@@ -222,15 +224,74 @@
     return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
   }
 
+  // Efface le canvas
+  function clearCanvas() {
+    bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+  }
+
+  // Dessine la phase lunaire animée (cercle blanc + ombre noire qui se déplace)
+  // Calcul phase lune simple (0 = nouvelle lune, 1 = pleine lune)
+  function getMoonPhase() {
+    const now = new Date();
+    const synodicMonth = 29.530588853; // en jours
+    const newMoon = new Date(Date.UTC(2000,0,6,18,14)); // date d'une nouvelle lune connue
+    const diff = (now - newMoon) / 86400000; // diff en jours
+    const phase = (diff % synodicMonth) / synodicMonth;
+    return phase;
+  }
+
+  function drawMoonPhase() {
+    clearCanvas();
+
+    const cx = bgCanvas.width - 120;
+    const cy = 120;
+    const r = 50;
+    const phase = getMoonPhase();
+
+    // Cercle pleine lune (blanc)
+    bgCtx.fillStyle = 'rgba(255,255,255,0.9)';
+    bgCtx.beginPath();
+    bgCtx.arc(cx, cy, r, 0, Math.PI * 2);
+    bgCtx.fill();
+
+    // Ombre (noire) qui cache une partie selon phase
+    bgCtx.fillStyle = 'rgba(0,0,0,0.9)';
+    bgCtx.beginPath();
+
+    if(phase < 0.5) {
+      // Lune croissante : ombre à droite qui se déplace vers centre
+      const shift = r * 2 * (0.5 - phase) * 2;
+      bgCtx.arc(cx - shift, cy, r, 0, Math.PI * 2);
+    } else {
+      // Lune décroissante : ombre à gauche qui se déplace vers centre
+      const shift = r * 2 * (phase - 0.5) * 2;
+      bgCtx.arc(cx + shift, cy, r, 0, Math.PI * 2);
+    }
+    bgCtx.fill();
+
+    // Contour lune
+    bgCtx.strokeStyle = 'rgba(255,255,255,0.7)';
+    bgCtx.lineWidth = 3;
+    bgCtx.beginPath();
+    bgCtx.arc(cx, cy, r, 0, Math.PI * 2);
+    bgCtx.stroke();
+  }
+
+  // Animation continue lune
+  function animate() {
+    clearCanvas();
+    drawMoonPhase();
+    requestAnimationFrame(animate);
+  }
+  animate();
+
+  // Nuages animés (DOM)
   function clearChildren(parent) {
     while (parent.firstChild) parent.removeChild(parent.firstChild);
   }
-
-  // Crée les nuages animés
   function createClouds() {
-    const container = document.getElementById('background-anim');
-    clearChildren(container);
-    for (let i=0; i<5; i++) {
+    clearChildren(bgCanvas.parentNode); // enlève toutes les div nuages/pluie/neige
+    for(let i=0; i<5; i++) {
       const cloud = document.createElement('div');
       cloud.className = 'cloud';
       cloud.style.top = (20 + i*50) + 'px';
@@ -238,101 +299,36 @@
       cloud.style.height = '50px';
       cloud.style.animationDuration = (30 + Math.random()*40) + 's';
       cloud.style.animationDelay = (-Math.random()*60) + 's';
-      container.appendChild(cloud);
+      bgCanvas.parentNode.appendChild(cloud);
     }
   }
-
-  // Crée la pluie animée
   function createRain() {
-    const container = document.getElementById('background-anim');
-    clearChildren(container);
-    for (let i=0; i<50; i++) {
+    clearChildren(bgCanvas.parentNode);
+    for(let i=0; i<50; i++) {
       const drop = document.createElement('div');
       drop.className = 'rain';
       drop.style.left = (Math.random() * window.innerWidth) + 'px';
       drop.style.animationDuration = (0.5 + Math.random()*0.5) + 's';
       drop.style.animationDelay = (-Math.random()*1) + 's';
-      container.appendChild(drop);
+      bgCanvas.parentNode.appendChild(drop);
     }
   }
-
-  // Crée la neige animée
   function createSnow() {
-    const container = document.getElementById('background-anim');
-    clearChildren(container);
-    for (let i=0; i<40; i++) {
+    clearChildren(bgCanvas.parentNode);
+    for(let i=0; i<40; i++) {
       const flake = document.createElement('div');
       flake.className = 'snow';
       flake.style.left = (Math.random() * window.innerWidth) + 'px';
       flake.style.animationDuration = (3 + Math.random()*4) + 's';
       flake.style.animationDelay = (-Math.random()*7) + 's';
-      container.appendChild(flake);
+      bgCanvas.parentNode.appendChild(flake);
     }
   }
-
-  // Supprime toute animation
   function clearAnimations() {
-    const container = document.getElementById('background-anim');
-    clearChildren(container);
+    clearChildren(bgCanvas.parentNode);
   }
 
-  // Calcul simple phase lunaire entre 0 et 1 (nouvelle lune à pleine lune)
-  function getMoonPhaseFraction(date = new Date()) {
-    const synodicMonth = 29.530588853; // durée moyenne cycle lunaire en jours
-    const newMoon = new Date(Date.UTC(2000,0,6,18,14)); // référence nouvelle lune connue
-    const diff = (date.getTime() - newMoon.getTime()) / 86400000; // en jours
-    return (diff % synodicMonth) / synodicMonth;
-  }
-
-  // Dessine la phase de lune dans le canvas
-  function drawMoonPhase() {
-    const canvas = document.getElementById('moon-phase-canvas');
-    const ctx = canvas.getContext('2d');
-    const w = canvas.width = window.innerWidth;
-    const h = canvas.height = window.innerHeight;
-    ctx.clearRect(0, 0, w, h);
-
-    const phase = getMoonPhaseFraction();
-
-    const centerX = w - 150;
-    const centerY = 150;
-    const radius = 60;
-
-    ctx.fillStyle = 'rgba(255, 255, 224, 0.8)';
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, radius, 0, 2*Math.PI);
-    ctx.fill();
-
-    // Dessin de l’ombre en fonction de la phase
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
-    ctx.beginPath();
-    if (phase <= 0.5) {
-      // croissant à pleine lune
-      const angle = 2 * Math.PI * phase * 2;
-      ctx.ellipse(centerX + radius * Math.cos(angle)/2, centerY, radius, radius, 0, 0, Math.PI * 2);
-    } else {
-      // décroissant à nouvelle lune
-      const angle = 2 * Math.PI * (phase - 0.5) * 2;
-      ctx.ellipse(centerX - radius * Math.cos(angle)/2, centerY, radius, radius, 0, 0, Math.PI * 2);
-    }
-    ctx.fill();
-
-    // Contour de la lune
-    ctx.strokeStyle = 'rgba(255, 255, 224, 0.9)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, radius, 0, 2*Math.PI);
-    ctx.stroke();
-  }
-
-  // Animation boucle phase lune
-  function animateMoonPhase() {
-    drawMoonPhase();
-    requestAnimationFrame(animateMoonPhase);
-  }
-  animateMoonPhase();
-  window.addEventListener('resize', drawMoonPhase);
-
+  // Récup météo actuelle + animation fond
   async function fetchWeather() {
     try {
       const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=${units}&lang=${lang}`);
@@ -345,11 +341,9 @@
       if(data.rain && data.rain["1h"]) precip += data.rain["1h"];
       if(data.snow && data.snow["1h"]) precip += data.snow["1h"];
       document.getElementById("precip").textContent = precip > 0 ? precip.toFixed(1) + " mm" : "Aucune";
-
       document.getElementById("pressure").textContent = data.main.pressure;
       document.getElementById("wind").textContent = Math.round(data.wind.speed * 3.6);
 
-      // Direction vent cardinal + rotation flèche
       const deg = data.wind.deg;
       const cardinal = degToCardinal(deg);
       windDirSpan.textContent = `${cardinal} (${deg}°)`;
@@ -361,25 +355,15 @@
       conditionIcon.src = `https://openweathermap.org/img/wn/${data.weather[0].icon}@4x.png`;
       conditionIcon.alt = data.weather[0].description;
 
-      // Fond animé selon météo principale
+      // Fond animé selon météo
       const main = data.weather[0].main.toLowerCase();
       if(main.includes("rain")) createRain();
       else if(main.includes("snow")) createSnow();
       else if(main.includes("cloud")) createClouds();
       else clearAnimations();
 
-      // Calcul intensité lumineuse simple basée sur heure et lever/coucher soleil
-      const now = new Date();
-      const sunriseDate = new Date(data.sys.sunrise * 1000);
-      const sunsetDate = new Date(data.sys.sunset * 1000);
-
-      let intensity = 0;
-      if (now >= sunriseDate && now <= sunsetDate) {
-        intensity = Math.round(100 * (now - sunriseDate) / (sunsetDate - sunriseDate));
-      } else {
-        intensity = 0;
-      }
-      window.luminosity = intensity; // stocker globalement pour chart
+      // Sauvegarder nébulosité (clouds.all en %)
+      window.currentCloudiness = data.clouds?.all ?? 0;
 
     } catch (e) {
       console.error("Erreur météo actuelle :", e);
@@ -387,6 +371,7 @@
     }
   }
 
+  // Récup prévisions + graphiques, luminosité pondérée par nébulosité
   async function fetchForecast() {
     try {
       const res = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=${units}&lang=${lang}`);
@@ -402,7 +387,8 @@
       const windDirs = [];
       const luminosities = [];
 
-      const now = new Date();
+      // Récupérer nébulosité actuelle (ou défaut 0)
+      const cloudiness = window.currentCloudiness ?? 0;
 
       data.list.forEach(item => {
         const date = new Date(item.dt * 1000);
@@ -417,16 +403,21 @@
         winds.push(item.wind.speed * 3.6);
         windDirs.push(item.wind.deg);
 
-        // Estimation simple de luminosité : maximum à midi, 0 la nuit
-        const hours = date.getHours();
-        let lum = 0;
-        if(hours >= 6 && hours <= 18) {
-          lum = Math.round(100 * Math.sin(((hours - 6) / 12) * Math.PI)); // pic à midi
+        // Luminosité brute selon heure : pic à midi, 0 la nuit
+        const h = date.getHours();
+        let baseLum = 0;
+        if(h >= 6 && h <= 18) {
+          // pic à 12h, sinus
+          baseLum = Math.sin(((h - 6) / 12) * Math.PI);
         }
+        // Pondération luminosité par couverture nuageuse (inversion % nuageux)
+        // Plus nuageux -> moins lumineux
+        const cloudFactor = 1 - (cloudiness / 100);
+        const lum = baseLum * cloudFactor * 100; // en %
         luminosities.push(lum);
       });
 
-      // Graphique principal sans remplissage
+      // Graphique principal
       const ctxMain = document.getElementById("mainChart").getContext("2d");
       new Chart(ctxMain, {
         type: 'line',
@@ -515,12 +506,24 @@
             legend: { position: 'top', labels: { boxWidth: 12, padding: 10 } },
             tooltip: {
               enabled: true, mode: 'nearest', intersect: false,
+              callbacks: {
+                label: context => {
+                  const label = context.dataset.label || '';
+                  let val = context.parsed.y;
+                  if(label.includes('Direction du vent')) {
+                    const deg = val;
+                    const card = degToCardinal(deg);
+                    return `${label}: ${deg}° (${card})`;
+                  }
+                  return label + ': ' + val;
+                }
+              }
             }
           }
         }
       });
 
-      // Graphique secondaire vent + direction + luminosité
+      // Graphique secondaire vent + luminosité
       const ctxWind = document.getElementById("windChart").getContext("2d");
       new Chart(ctxWind, {
         type: 'line',
@@ -548,14 +551,14 @@
               pointRadius: 2,
             },
             {
-              label: "Intensité lumineuse (%)",
+              label: "Luminosité pondérée (%)",
               data: luminosities,
-              borderColor: "#f1c40f",
-              backgroundColor: "rgba(241,196,15,0.3)",
+              borderColor: "orange",
+              backgroundColor: "rgba(255,165,0,0.3)",
               yAxisID: 'y3',
-              fill: true,
               tension: 0.3,
-              pointRadius: 0,
+              fill: true,
+              pointRadius: 2,
             }
           ]
         },
@@ -569,6 +572,7 @@
               position: 'left',
               title: { display: true, text: 'Vitesse (km/h)' },
               beginAtZero: true,
+              max: 100,
             },
             y2: {
               type: 'linear',
@@ -585,7 +589,7 @@
               position: 'right',
               offset: true,
               title: { display: true, text: 'Luminosité (%)' },
-              min: 0,
+              beginAtZero: true,
               max: 100,
               grid: { drawOnChartArea: false },
             }
@@ -595,12 +599,16 @@
             tooltip: {
               enabled: true, mode: 'nearest', intersect: false,
               callbacks: {
-                label: ctx => {
-                  const label = ctx.dataset.label || '';
-                  let val = ctx.parsed.y;
+                label: context => {
+                  const label = context.dataset.label || '';
+                  let val = context.parsed.y;
                   if(label.includes('Direction du vent')) {
-                    const card = degToCardinal(val);
-                    return `${label}: ${val}° (${card})`;
+                    const deg = val;
+                    const card = degToCardinal(deg);
+                    return `${label}: ${deg}° (${card})`;
+                  }
+                  if(label.includes('Luminosité')) {
+                    return label + ': ' + val.toFixed(1) + ' %';
                   }
                   return label + ': ' + val;
                 }
@@ -619,10 +627,9 @@
   fetchWeather();
   fetchForecast();
 
-  // Ajuster les animations quand fenêtre redimensionnée
+  // Recharger météo et animations au redimensionnement
   window.addEventListener('resize', () => {
-    fetchWeather(); // pour remettre les animations propres
-    drawMoonPhase();
+    fetchWeather();
   });
 </script>
 </body>
