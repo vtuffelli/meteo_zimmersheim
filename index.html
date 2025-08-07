@@ -293,6 +293,7 @@
       document.getElementById("wind-dir").textContent = `${degToCardinal(data.wind.deg)} (${data.wind.deg}°)`;
       document.getElementById("sunrise").textContent = formatTime(data.sys.sunrise);
       document.getElementById("sunset").textContent = formatTime(data.sys.sunset);
+      console.log("Icon code:", data.weather[0].icon);
       document.getElementById("condition-icon").src = `https://openweathermap.org/img/wn/${data.weather[0].icon}@4x.png`;
 
       // Luminosité estimée corrigée par couverture nuageuse
