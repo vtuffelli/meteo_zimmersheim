@@ -250,7 +250,7 @@
       return phases[index];
     }
 
-    /* ==== Chapitre 11.2 : Fetch météo actuelle ==== */
+        /* ==== Chapitre 11.2 : Fetch météo actuelle OpenWeatherMap ==== */
     async function fetchWeather() {
       const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=${units}&lang=${lang}`);
       const data = await res.json();
@@ -269,314 +269,75 @@
       document.getElementById('feels-like').textContent = data.main.feels_like.toFixed(1);
       document.getElementById('temp-min').textContent = data.main.temp_min.toFixed(1);
       document.getElementById('temp-max').textContent = data.main.temp_max.toFixed(1);
-      document.getElementById('clouds').textContent = data.clouds.all; // en %
+      document.getElementById('clouds').textContent = data.clouds.all;
 
-      // Luminosité estimée corrigée par couverture nuageuse
       const isDay = (Date.now() / 1000 > data.sys.sunrise) && (Date.now() / 1000 < data.sys.sunset);
       const baseSun = isDay ? 100 : 0;
       const clouds = data.clouds?.all || 0;
       const sunAdj = Math.max(0, baseSun * (1 - clouds / 100));
       document.getElementById("sunlight").textContent = Math.round(sunAdj);
 
-      // Lune
       const moon = getMoonPhaseWithDescription(new Date());
       document.getElementById("moon-phase").textContent = moon.icon;
       document.getElementById("moon-phase-desc").textContent = moon.label;
     }
 
-    /* ==== Chapitre 11.3 : Fetch indice UV ==== */
-    let uvValueGlobal = 0;  // variable globale pour chart
-    async function fetchUV() {
-      const res = await fetch(`https://api.openweathermap.org/data/2.5/uvi?lat=47.7746&lon=7.3373&appid=${apiKey}`);
+    /* ==== Chapitre 11.2 bis : Fetch météo actuelle Open-Meteo ==== */
+    async function fetchWeatherOpenMeteo() {
+      const lat = 47.7746;
+      const lon = 7.3373;
+
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=temperature_2m,apparent_temperature,precipitation,cloudcover,pressure_msl,uv_index,windspeed_10m,winddirection_10m&daily=sunrise,sunset,uv_index_max,moon_phase&timezone=Europe%2FBerlin`;
+
+      const res = await fetch(url);
       const data = await res.json();
-      uvValueGlobal = data.value;
-      document.getElementById("uv-index").textContent = uvValueGlobal;
+
+      // Current weather
+      const current = data.current_weather;
+      const daily = data.daily;
+
+      document.getElementById("temp").textContent = current.temperature.toFixed(1);
+      document.getElementById("feels-like").textContent = current.apparent_temperature?.toFixed(1) || "N/A";
+      document.getElementById("wind").textContent = current.windspeed.toFixed(1);
+      document.getElementById("wind-dir").textContent = `${degToCardinal(current.winddirection)} (${current.winddirection}°)`;
+      document.getElementById("pressure").textContent = (daily.pressure_msl ? daily.pressure_msl[0].toFixed(1) : "N/A");
+
+      document.getElementById("clouds").textContent = current.cloudcover || "N/A";
+      document.getElementById("precip").textContent = (current.precipitation !== undefined ? current.precipitation.toFixed(1) + " mm" : "Aucune");
+      document.getElementById("uv-index").textContent = daily.uv_index_max ? daily.uv_index_max[0].toFixed(1) : "N/A";
+      document.getElementById("sunrise").textContent = daily.sunrise ? new Date(daily.sunrise[0]).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' }) : "N/A";
+      document.getElementById("sunset").textContent = daily.sunset ? new Date(daily.sunset[0]).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' }) : "N/A";
+
+      // Ensoleillement estimé (simple)
+      const isDay = Date.now() > new Date(daily.sunrise[0]).getTime() && Date.now() < new Date(daily.sunset[0]).getTime();
+      const baseSun = isDay ? 100 : 0;
+      const clouds = current.cloudcover || 0;
+      const sunAdj = Math.max(0, baseSun * (1 - clouds / 100));
+      document.getElementById("sunlight").textContent = Math.round(sunAdj);
+
+      // Phase lunaire (0-1) : 0 = nouvelle lune, 0.5 = pleine lune
+      const moonPhaseValue = daily.moon_phase ? daily.moon_phase[0] : 0.5;
+      const moonPhases = [
+        { icon: '🌑', label: 'Nouvelle lune' },
+        { icon: '🌒', label: 'Premier croissant' },
+        { icon: '🌓', label: 'Premier quartier' },
+        { icon: '🌔', label: 'Lune gibbeuse croissante' },
+        { icon: '🌕', label: 'Pleine lune' },
+        { icon: '🌖', label: 'Lune gibbeuse décroissante' },
+        { icon: '🌗', label: 'Dernier quartier' },
+        { icon: '🌘', label: 'Dernier croissant' }
+      ];
+      // Convertir moonPhaseValue [0-1] en index 0-7
+      let idx = Math.floor(moonPhaseValue * 8) % 8;
+      document.getElementById("moon-phase").textContent = moonPhases[idx].icon;
+      document.getElementById("moon-phase-desc").textContent = moonPhases[idx].label;
     }
 
-    /* ==== Chapitre 11.4 : Fetch qualité de l'air ==== */
+    /* ==== Chapitre 11.3 : Fetch qualité de l'air OpenWeatherMap ==== */
     async function fetchAir() {
-      const res = await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=47.7746&lon=7.3373&appid=${apiKey}`);
-      const data = await res.json();
-      const a = data.list[0].components;
-
-      const desc = {
-        co: 'CO (monoxyde de carbone)',
-        no: 'NO (monoxyde d\'azote)',
-        no2: 'NO₂ (dioxyde d\'azote)',
-        o3: 'O₃ (ozone)',
-        so2: 'SO₂ (dioxyde de soufre)',
-        pm2_5: 'PM2.5 (particules fines)',
-        pm10: 'PM10 (grosses particules)',
-        nh3: 'NH₃ (ammoniac)'
-      };
-
-      const html = Object.entries(a).map(([key, val]) =>
-        `<div><b>${desc[key] || key}</b> : ${val} µg/m³${interpretAirQuality(key, val)}</div>`
-      ).join("");
-      document.getElementById("air-quality-details").innerHTML = html;
-    }
-
-    function interpretAirQuality(key, val) {
-      const ranges = {
-        pm2_5: [10, 20, 25, 50], pm10: [20, 40, 50, 100],
-        o3: [50, 100, 130, 240], no2: [40, 90, 120, 230],
-        so2: [50, 100, 150, 500], co: [1000, 2000, 5000, 10000]
-      };
-
-      const labels = [' (Bonne)', ' (Acceptable)', ' (Médiocre)', ' (Mauvaise)', ' (Dangereuse)'];
-      const thresholds = ranges[key];
-      if (!thresholds) return '';
-      const i = thresholds.findIndex(t => val < t);
-      return labels[i >= 0 ? i : labels.length - 1];
-    }
-
-/* ==== Chapitre 11.5 : Fetch prévisions météo ==== */
-function degToDirectionIndex(deg) {
-  return Math.round(deg / 22.5) % 16;
-}
-const windDirs = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSO", "SO", "OSO", "O", "ONO", "NO", "NNO"];
-
-async function fetchForecast() {
-  const res = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=${units}&lang=${lang}`);
-  const data = await res.json();
-
-  const labels = data.list.map(item => {
-    const dt = new Date(item.dt * 1000);
-    return dt.toLocaleString('fr-FR', { hour: '2-digit', day: '2-digit', month: '2-digit' });
-  });
-
-  const temps = data.list.map(item => item.main.temp);
-  const humidity = data.list.map(item => item.main.humidity);
-  const pressure = data.list.map(item => item.main.pressure);
-  const precipitation = data.list.map(item => (item.rain?.["3h"] || 0) + (item.snow?.["3h"] || 0));
-
-  const windSpeed = data.list.map(item => item.wind.speed * 3.6);
-  const windDeg = data.list.map(item => item.wind.deg);
-  const windDirIndex = windDeg.map(deg => degToDirectionIndex(deg));
-  const clouds = data.list.map(item => item.clouds.all);
-  const uvIndexForecast = new Array(data.list.length).fill(uvValueGlobal);
-
-  // === Graphique principal ===
-  const ctxMain = document.getElementById('mainChart').getContext('2d');
-  if(window.mainChartInstance) window.mainChartInstance.destroy();
-  window.mainChartInstance = new Chart(ctxMain, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [
-        {
-          label: 'Température (°C)',
-          data: temps,
-          borderColor: 'rgba(255, 99, 132, 0.8)',
-          fill: false,
-          yAxisID: 'y',
-          tension: 0.3,
-        },
-        {
-          label: 'Humidité (%)',
-          data: humidity,
-          borderColor: 'rgba(54, 162, 235, 0.8)',
-          fill: false,
-          yAxisID: 'y1',
-          tension: 0.3,
-        },
-        {
-          label: 'Précipitations (mm)',
-          data: precipitation,
-          type: 'bar',
-          backgroundColor: 'rgba(75, 192, 192, 0.7)',
-          yAxisID: 'y2',
-        },
-        {
-          label: 'Pression (hPa)',
-          data: pressure,
-          borderColor: 'rgba(255, 206, 86, 0.8)',
-          fill: false,
-          yAxisID: 'y3',
-          tension: 0.3,
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      interaction: { mode: 'index', intersect: false },
-      stacked: false,
-      scales: {
-        y: {
-          type: 'linear',
-          position: 'left',
-          title: { display: true, text: 'Température (°C)' },
-        },
-        y1: {
-          type: 'linear',
-          position: 'right',
-          grid: { drawOnChartArea: false },
-          title: { display: true, text: 'Humidité (%)' },
-          min: 0, max: 100,
-        },
-        y2: {
-          type: 'linear',
-          position: 'right',
-          grid: { drawOnChartArea: false },
-          title: { display: true, text: 'Précipitations (mm)' },
-          min: 0,
-        },
-        y3: {
-          type: 'linear',
-          position: 'left',
-          grid: { drawOnChartArea: false },
-          title: { display: true, text: 'Pression (hPa)' },
-          min: 900, max: 1100,
-          offset: true,
-        }
-      },
-      plugins: {
-        legend: { position: 'top' },
-        tooltip: { mode: 'index', intersect: false }
-      }
-    }
-  });
-
-  // === Graphique secondaire (vent, orientation, couverture nuageuse) ===
-  const ctxWind = document.getElementById('windChart').getContext('2d');
-  if(window.windChartInstance) window.windChartInstance.destroy();
-  window.windChartInstance = new Chart(ctxWind, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [
-        {
-          label: 'Vent (km/h)',
-          data: windSpeed,
-          borderColor: 'rgba(0, 123, 255, 0.8)',
-          fill: false,
-          yAxisID: 'y',
-          tension: 0.3,
-        },
-        {
-          label: 'Couverture nuageuse (%)',
-          data: clouds,
-          borderColor: 'rgba(128, 128, 128, 0.8)',
-          fill: false,
-          yAxisID: 'y2',
-          tension: 0.3,
-        },
-        {
-          label: 'Orientation vent',
-          data: windDirIndex,
-          borderColor: 'rgba(255, 99, 71, 0.9)',
-          borderDash: [5, 5],
-          fill: false,
-          yAxisID: 'y3',
-          tension: 0.3,
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      interaction: { mode: 'index', intersect: false },
-      stacked: false,
-      scales: {
-        y: {
-          position: 'left',
-          title: { display: true, text: 'Vent (km/h)' },
-          min: 0,
-        },
-        y2: {
-          position: 'right',
-          title: { display: true, text: 'Nuages (%)' },
-          min: 0, max: 100,
-          grid: { drawOnChartArea: false },
-        },
-        y3: {
-          position: 'right',
-          title: { display: true, text: 'Orientation vent' },
-          min: 0,
-          max: 15,
-          grid: { drawOnChartArea: false },
-          ticks: {
-            stepSize: 1,
-            callback: (value) => windDirs[value] || '',
-          }
-        }
-      },
-      plugins: {
-        legend: { position: 'top' },
-        tooltip: { mode: 'index', intersect: false }
-      }
-    }
-  });
-
-  // === Graphique qualité de l’air ===
-  const ctxAir = document.getElementById('airChart').getContext('2d');
-  if(window.airChartInstance) window.airChartInstance.destroy();
-
-  const airComponents = Object.keys(window.airQualityData || {});
-  const airValues = Object.values(window.airQualityData || {}).map(v => parseFloat(v.toFixed(2)));
-
-  const ranges = {
-    pm2_5: [10, 20, 25, 50], pm10: [20, 40, 50, 100],
-    o3: [50, 100, 130, 240], no2: [40, 90, 120, 230],
-    so2: [50, 100, 150, 500], co: [1000, 2000, 5000, 10000]
-  };
-  const palette = ['#4caf50', '#cddc39', '#ffc107', '#ff5722', '#b71c1c'];
-
-  const colors = airComponents.map((key, i) => {
-    const val = airValues[i];
-    const thresholds = ranges[key] || [];
-    const index = thresholds.findIndex(t => val < t);
-    return palette[index >= 0 ? index : palette.length - 1];
-  });
-
-  window.airChartInstance = new Chart(ctxAir, {
-    type: 'bar',
-    data: {
-      labels: airComponents,
-      datasets: [{
-        label: 'Concentration (µg/m³)',
-        data: airValues,
-        backgroundColor: colors,
-        yAxisID: 'y',
-      }]
-    },
-    options: {
-      responsive: true,
-      scales: {
-        y: {
-          beginAtZero: true,
-          title: { display: true, text: 'Concentration (µg/m³)' }
-        }
-      },
-      plugins: {
-        legend: { display: false },
-        tooltip: { enabled: true },
-        datalabels: {
-          color: '#000',
-          anchor: 'end',
-          align: 'top',
-          formatter: value => value.toFixed(2),
-          font: { weight: 'bold' }
-        }
-      }
-    },
-    plugins: [ChartDataLabels]
-  });
-}
-
-    /* ==== Chapitre 11.6 : Initialisation ==== */
-    async function init() {
-      await fetchWeather();
-      await fetchUV();
-      await fetchAir();
-      await fetchForecast();
-    }
-
-    // Stocker la dernière qualité de l'air pour le graphique
-    window.airQualityData = {};
-
-    // Modifier fetchAir pour aussi stocker données dans airQualityData
-    async function fetchAir() {
-      const res = await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=47.7746&lon=7.3373&appid=${apiKey}`);
+      const lat = 47.7746;
+      const lon = 7.3373;
+      const res = await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${apiKey}`);
       const data = await res.json();
       const a = data.list[0].components;
       window.airQualityData = a;
@@ -598,7 +359,334 @@ async function fetchForecast() {
       document.getElementById("air-quality-details").innerHTML = html;
     }
 
-    /* ==== Chapitre 11.7 : Lancement ==== */
+    /* ==== Chapitre 11.3 bis : Fetch qualité de l'air Open-Meteo ==== */
+    async function fetchAirOpenMeteo() {
+      const lat = 47.7746;
+      const lon = 7.3373;
+
+      // Open-Meteo air quality (hourly) includes pm10, pm2_5, no2, so2, o3, co
+      const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&hourly=pm10,pm2_5,no2,so2,o3,co&timezone=Europe%2FBerlin`;
+
+      const res = await fetch(url);
+      const data = await res.json();
+
+      if(data.hourly) {
+        const latestIdx = data.hourly.time.length - 1;
+        const a = {
+          pm10: data.hourly.pm10 ? data.hourly.pm10[latestIdx] : null,
+          pm2_5: data.hourly.pm2_5 ? data.hourly.pm2_5[latestIdx] : null,
+          no2: data.hourly.no2 ? data.hourly.no2[latestIdx] : null,
+          so2: data.hourly.so2 ? data.hourly.so2[latestIdx] : null,
+          o3: data.hourly.o3 ? data.hourly.o3[latestIdx] : null,
+          co: data.hourly.co ? data.hourly.co[latestIdx] : null,
+        };
+        window.airQualityDataOpenMeteo = a;
+
+        const desc = {
+          co: 'CO (monoxyde de carbone)',
+          no2: 'NO₂ (dioxyde d\'azote)',
+          o3: 'O₃ (ozone)',
+          so2: 'SO₂ (dioxyde de soufre)',
+          pm2_5: 'PM2.5 (particules fines)',
+          pm10: 'PM10 (grosses particules)'
+        };
+
+        const html = Object.entries(a).map(([key, val]) =>
+          `<div><b>${desc[key] || key}</b> : ${val !== null ? val.toFixed(2) : 'N/A'} µg/m³</div>`
+        ).join("");
+        document.getElementById("air-quality-details").innerHTML += `<hr><h3>Qualité de l'air (Open-Meteo)</h3>` + html;
+      }
+    }
+
+    /* ==== Chapitre 11.4 : Fetch UV OpenWeatherMap ==== */
+    let uvValueGlobal = 0;  // variable globale pour chart
+    async function fetchUV() {
+      const lat = 47.7746;
+      const lon = 7.3373;
+      const res = await fetch(`https://api.openweathermap.org/data/2.5/uvi?lat=${lat}&lon=${lon}&appid=${apiKey}`);
+      const data = await res.json();
+      uvValueGlobal = data.value;
+      document.getElementById("uv-index").textContent = uvValueGlobal;
+    }
+
+    /* ==== Chapitre 11.5 : Fetch prévisions météo OpenWeatherMap ==== */
+    function degToDirectionIndex(deg) {
+      return Math.round(deg / 22.5) % 16;
+    }
+    const windDirs = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSO", "SO", "OSO", "O", "ONO", "NO", "NNO"];
+
+    async function fetchForecast() {
+      const res = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=${units}&lang=${lang}`);
+      const data = await res.json();
+
+      const labels = data.list.map(item => {
+        const dt = new Date(item.dt * 1000);
+        return dt.toLocaleString('fr-FR', { hour: '2-digit', day: '2-digit', month: '2-digit' });
+      });
+
+      const temps = data.list.map(item => item.main.temp);
+      const humidity = data.list.map(item => item.main.humidity);
+      const pressure = data.list.map(item => item.main.pressure);
+      const precipitation = data.list.map(item => (item.rain?.["3h"] || 0) + (item.snow?.["3h"] || 0));
+
+      const windSpeed = data.list.map(item => item.wind.speed * 3.6);
+      const windDeg = data.list.map(item => item.wind.deg);
+      const windDirIndex = windDeg.map(deg => degToDirectionIndex(deg));
+      const clouds = data.list.map(item => item.clouds.all);
+
+      // === Graphique principal ===
+      const ctxMain = document.getElementById('mainChart').getContext('2d');
+      if(window.mainChartInstance) window.mainChartInstance.destroy();
+      window.mainChartInstance = new Chart(ctxMain, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Température (°C)',
+              data: temps,
+              borderColor: 'rgba(255, 99, 132, 0.8)',
+              fill: false,
+              yAxisID: 'y',
+              tension: 0.3,
+            },
+            {
+              label: 'Humidité (%)',
+              data: humidity,
+              borderColor: 'rgba(54, 162, 235, 0.8)',
+              fill: false,
+              yAxisID: 'y1',
+              tension: 0.3,
+            },
+            {
+              label: 'Précipitations (mm)',
+              data: precipitation,
+              type: 'bar',
+              backgroundColor: 'rgba(75, 192, 192, 0.7)',
+              yAxisID: 'y2',
+            },
+            {
+              label: 'Pression (hPa)',
+              data: pressure,
+              borderColor: 'rgba(255, 206, 86, 0.8)',
+              fill: false,
+              yAxisID: 'y3',
+              tension: 0.3,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          interaction: { mode: 'index', intersect: false },
+          stacked: false,
+          scales: {
+            y: {
+              type: 'linear',
+              position: 'left',
+              title: { display: true, text: 'Température (°C)' },
+            },
+            y1: {
+              type: 'linear',
+              position: 'right',
+              grid: { drawOnChartArea: false },
+              title: { display: true, text: 'Humidité (%)' },
+              min: 0, max: 100,
+            },
+            y2: {
+              type: 'linear',
+              position: 'right',
+              grid: { drawOnChartArea: false },
+              title: { display: true, text: 'Précipitations (mm)' },
+              min: 0,
+            },
+            y3: {
+              type: 'linear',
+              position: 'left',
+              grid: { drawOnChartArea: false },
+              title: { display: true, text: 'Pression (hPa)' },
+              min: 900, max: 1100,
+              offset: true,
+            }
+          },
+          plugins: {
+            legend: { position: 'top' },
+            tooltip: { mode: 'index', intersect: false }
+          }
+        }
+      });
+
+      // === Graphique secondaire (vent, orientation, couverture nuageuse) ===
+      const ctxWind = document.getElementById('windChart').getContext('2d');
+      if(window.windChartInstance) window.windChartInstance.destroy();
+      window.windChartInstance = new Chart(ctxWind, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Vent (km/h)',
+              data: windSpeed,
+              borderColor: 'rgba(0, 123, 255, 0.8)',
+              fill: false,
+              yAxisID: 'y',
+              tension: 0.3,
+            },
+            {
+              label: 'Couverture nuageuse (%)',
+              data: clouds,
+              borderColor: 'rgba(128, 128, 128, 0.8)',
+              fill: false,
+              yAxisID: 'y2',
+              tension: 0.3,
+            },
+            {
+              label: 'Orientation vent',
+              data: windDirIndex,
+              borderColor: 'rgba(255, 99, 71, 0.9)',
+              borderDash: [5, 5],
+              fill: false,
+              yAxisID: 'y3',
+              tension: 0.3,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          interaction: { mode: 'index', intersect: false },
+          stacked: false,
+          scales: {
+            y: {
+              position: 'left',
+              title: { display: true, text: 'Vent (km/h)' },
+              min: 0,
+            },
+            y2: {
+              position: 'right',
+              title: { display: true, text: 'Nuages (%)' },
+              min: 0, max: 100,
+              grid: { drawOnChartArea: false },
+            },
+            y3: {
+              position: 'right',
+              title: { display: true, text: 'Orientation vent' },
+              min: 0,
+              max: 15,
+              grid: { drawOnChartArea: false },
+              ticks: {
+                stepSize: 1,
+                callback: (value) => windDirs[value] || '',
+              }
+            }
+          },
+          plugins: {
+            legend: { position: 'top' },
+            tooltip: { mode: 'index', intersect: false }
+          }
+        }
+      });
+
+      // === Graphique qualité de l’air ===
+      const ctxAir = document.getElementById('airChart').getContext('2d');
+      if(window.airChartInstance) window.airChartInstance.destroy();
+
+      const airComponents = Object.keys(window.airQualityData || {});
+      const airValues = Object.values(window.airQualityData || {}).map(v => parseFloat(v.toFixed(2)));
+
+      const ranges = {
+        pm2_5: [10, 20, 25, 50], pm10: [20, 40, 50, 100],
+        o3: [50, 100, 130, 240], no2: [40, 90, 120, 230],
+        so2: [50, 100, 150, 500], co: [1000, 2000, 4000, 10000]
+      };
+
+      function getColorForValue(key, val) {
+        if (!ranges[key]) return 'gray';
+        const r = ranges[key];
+        if (val <= r[0]) return 'green';
+        else if (val <= r[1]) return 'yellow';
+        else if (val <= r[2]) return 'orange';
+        else if (val <= r[3]) return 'red';
+        else return 'purple';
+      }
+
+      window.airChartInstance = new Chart(ctxAir, {
+        type: 'bar',
+        data: {
+          labels: airComponents,
+          datasets: [{
+            label: 'Qualité de l’air (µg/m³)',
+            data: airValues,
+            backgroundColor: airComponents.map((k,i) => getColorForValue(k, airValues[i])),
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: ctx => `${ctx.dataset.data[ctx.dataIndex]} µg/m³`
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: 'Concentration (µg/m³)' }
+            }
+          }
+        }
+      });
+    }
+
+    /* ==== Chapitre 11.6 : Interprétation qualité air ==== */
+    function interpretAirQuality(key, val) {
+      // Simple seuils indicatifs pour PM2.5 et PM10, sinon rien
+      if (key === 'pm2_5') {
+        if (val <= 10) return ' (Bon)';
+        if (val <= 20) return ' (Modéré)';
+        if (val <= 25) return ' (Dégradé)';
+        if (val <= 50) return ' (Mauvais)';
+        return ' (Très mauvais)';
+      }
+      if (key === 'pm10') {
+        if (val <= 20) return ' (Bon)';
+        if (val <= 40) return ' (Modéré)';
+        if (val <= 50) return ' (Dégradé)';
+        if (val <= 100) return ' (Mauvais)';
+        return ' (Très mauvais)';
+      }
+      return '';
+    }
+
+    /* ==== Chapitre 11.7 : Animation des nuages ==== */
+    function createClouds() {
+      const bg = document.getElementById('background-anim');
+      const cloudCount = 8;
+      for(let i=0; i<cloudCount; i++) {
+        const c = document.createElement('div');
+        c.classList.add('cloud');
+        const size = 50 + Math.random()*100;
+        c.style.width = `${size}px`;
+        c.style.height = `${size*0.6}px`;
+        c.style.top = `${Math.random()*70}vh`;
+        c.style.animationDuration = `${30 + Math.random()*40}s`;
+        c.style.left = `${-150 - Math.random()*300}px`;
+        bg.appendChild(c);
+      }
+    }
+
+    /* ==== Chapitre 11.8 : Initialisation ==== */
+    async function init() {
+      createClouds();
+
+      await fetchWeather();
+      await fetchWeatherOpenMeteo();
+      await fetchAir();
+      await fetchAirOpenMeteo();
+      await fetchUV();
+      await fetchForecast();
+    }
+
     init();
   </script>
 </body>
