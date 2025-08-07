@@ -261,57 +261,35 @@
     const units = "metric";
     const lang = "fr";
 
-/* ==== Chapitre 11.1 : Fonctions utilitaires ==== */
+    /* ==== Chapitre 11.1 : Fonctions utilitaires ==== */
+    function degToCardinal(deg) {
+      const dirs = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
+                    "S", "SSO", "SO", "OSO", "O", "ONO", "NO", "NNO"];
+      return dirs[Math.round(deg / 22.5) % 16];
+    }
 
-/**
- * Convertit un angle en direction cardinale (source du vent).
- * Ex: 160° → "SSE" (le vent vient du SSE).
- */
-function degToCardinal(deg) {
-  const dirs = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
-                "S", "SSO", "SO", "OSO", "O", "ONO", "NO", "NNO"];
-  return dirs[Math.round(deg / 22.5) % 16];
-}
+    function formatTime(ts) {
+      return new Date(ts * 1000).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    }
 
-/**
- * Calcule l’angle pour afficher visuellement la flèche dans le bon sens.
- * Ex: 160° → 340° (la flèche pointe vers où le vent souffle).
- */
-function degToVisualArrow(deg) {
-  return (deg + 180) % 360;
-}
-
-/**
- * Formate un timestamp UNIX en heure/minute au format FR.
- */
-function formatTime(ts) {
-  return new Date(ts * 1000).toLocaleTimeString('fr-FR', {
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-}
-
-/**
- * Renvoie la phase lunaire actuelle avec une icône et une étiquette.
- */
-function getMoonPhaseWithDescription(date) {
-  const lp = 2551443; // Durée moyenne d'un cycle lunaire en secondes
-  const new_moon = new Date(1970, 0, 7, 20, 35, 0); // Référence nouvelle lune
-  const phase = ((date.getTime() - new_moon.getTime()) / 1000) % lp;
-  const percent = phase / lp;
-  const index = Math.floor(percent * 8);
-  const phases = [
-    { icon: '🌑', label: 'Nouvelle lune' },
-    { icon: '🌒', label: 'Premier croissant' },
-    { icon: '🌓', label: 'Premier quartier' },
-    { icon: '🌔', label: 'Lune gibbeuse croissante' },
-    { icon: '🌕', label: 'Pleine lune' },
-    { icon: '🌖', label: 'Lune gibbeuse décroissante' },
-    { icon: '🌗', label: 'Dernier quartier' },
-    { icon: '🌘', label: 'Dernier croissant' }
-  ];
-  return phases[index];
-}
+    function getMoonPhaseWithDescription(date) {
+      const lp = 2551443;
+      const new_moon = new Date(1970,0,7,20,35,0);
+      const phase = ((date.getTime() - new_moon.getTime())/1000) % lp;
+      const percent = (phase / lp);
+      const index = Math.floor(percent * 8);
+      const phases = [
+        { icon: '🌑', label: 'Nouvelle lune' },
+        { icon: '🌒', label: 'Premier croissant' },
+        { icon: '🌓', label: 'Premier quartier' },
+        { icon: '🌔', label: 'Lune gibbeuse croissante' },
+        { icon: '🌕', label: 'Pleine lune' },
+        { icon: '🌖', label: 'Lune gibbeuse décroissante' },
+        { icon: '🌗', label: 'Dernier quartier' },
+        { icon: '🌘', label: 'Dernier croissant' }
+      ];
+      return phases[index];
+    }
 
     /* ==== Chapitre 11.2 : Fetch météo actuelle ==== */
     async function fetchWeather() {
@@ -495,106 +473,74 @@ async function fetchForecast() {
   });
 
   // === Graphique secondaire (vent, orientation, couverture nuageuse) ===
-const ctxWind = document.getElementById('windChart').getContext('2d');
-if (window.windChartInstance) window.windChartInstance.destroy();
-
-const windDirs = [
-  "N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
-  "S", "SSO", "SO", "OSO", "O", "ONO", "NO", "NNO"
-];
-
-window.windChartInstance = new Chart(ctxWind, {
-  type: 'line',
-  data: {
-    labels,
-    datasets: [
-      {
-        label: 'Vent (km/h)',
-        data: windSpeed,
-        borderColor: 'rgba(0, 123, 255, 0.8)',
-        backgroundColor: 'rgba(0, 123, 255, 0.2)',
-        fill: true,
-        yAxisID: 'y',
-        tension: 0.3,
-        pointRadius: 2,
-      },
-      {
-        label: 'Couverture nuageuse (%)',
-        data: clouds,
-        borderColor: 'rgba(128, 128, 128, 0.8)',
-        backgroundColor: 'rgba(128, 128, 128, 0.2)',
-        fill: true,
-        yAxisID: 'y2',
-        tension: 0.3,
-        pointRadius: 2,
-      },
-      {
-        label: 'Orientation vent',
-        data: windDirIndex,
-        borderColor: 'rgba(255, 99, 71, 0.9)',
-        borderDash: [5, 5],
-        fill: false,
-        yAxisID: 'y3',
-        tension: 0.3,
-        pointRadius: 3,
-      }
-    ]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: { mode: 'index', intersect: false },
-    stacked: false,
-    scales: {
-      y: {
-        position: 'left',
-        title: { display: true, text: 'Vent (km/h)' },
-        min: 0,
-        ticks: {
-          callback: (val) => `${val} km/h`
+  const ctxWind = document.getElementById('windChart').getContext('2d');
+  if(window.windChartInstance) window.windChartInstance.destroy();
+  window.windChartInstance = new Chart(ctxWind, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Vent (km/h)',
+          data: windSpeed,
+          borderColor: 'rgba(0, 123, 255, 0.8)',
+          fill: false,
+          yAxisID: 'y',
+          tension: 0.3,
+        },
+        {
+          label: 'Couverture nuageuse (%)',
+          data: clouds,
+          borderColor: 'rgba(128, 128, 128, 0.8)',
+          fill: false,
+          yAxisID: 'y2',
+          tension: 0.3,
+        },
+        {
+          label: 'Orientation vent',
+          data: windDirIndex,
+          borderColor: 'rgba(255, 99, 71, 0.9)',
+          borderDash: [5, 5],
+          fill: false,
+          yAxisID: 'y3',
+          tension: 0.3,
         }
-      },
-      y2: {
-        position: 'right',
-        title: { display: true, text: 'Nuages (%)' },
-        min: 0,
-        max: 100,
-        grid: { drawOnChartArea: false },
-        ticks: {
-          callback: (val) => `${val}%`
-        }
-      },
-      y3: {
-        position: 'right',
-        title: { display: true, text: 'Orientation vent' },
-        min: 0,
-        max: 15,
-        grid: { drawOnChartArea: false },
-        ticks: {
-          stepSize: 1,
-          callback: (value) => windDirs[value] || ''
-        }
-      }
+      ]
     },
-    plugins: {
-      legend: { position: 'top' },
-      tooltip: {
-        mode: 'index',
-        intersect: false,
-        callbacks: {
-          label: function (context) {
-            const label = context.dataset.label || '';
-            const val = context.parsed.y;
-            if (label === 'Orientation vent') {
-              return `${label} : ${windDirs[val] || 'Inconnu'}`;
-            }
-            return `${label} : ${val}`;
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      stacked: false,
+      scales: {
+        y: {
+          position: 'left',
+          title: { display: true, text: 'Vent (km/h)' },
+          min: 0,
+        },
+        y2: {
+          position: 'right',
+          title: { display: true, text: 'Nuages (%)' },
+          min: 0, max: 100,
+          grid: { drawOnChartArea: false },
+        },
+        y3: {
+          position: 'right',
+          title: { display: true, text: 'Orientation vent' },
+          min: 0,
+          max: 15,
+          grid: { drawOnChartArea: false },
+          ticks: {
+            stepSize: 1,
+            callback: (value) => windDirs[value] || '',
           }
         }
+      },
+      plugins: {
+        legend: { position: 'top' },
+        tooltip: { mode: 'index', intersect: false }
       }
     }
-  }
-});
+  });
 
   // === Graphique qualité de l’air ===
   const ctxAir = document.getElementById('airChart').getContext('2d');
