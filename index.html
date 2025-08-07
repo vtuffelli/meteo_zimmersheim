@@ -560,14 +560,15 @@ async function fetchForecast() {
     }
   });
 
-  // === Graphique qualité de l’air ===
+ // === Graphique qualité de l’air ===
 const ctxAir = document.getElementById('airChart').getContext('2d');
 if (window.airChartInstance) window.airChartInstance.destroy();
 
+// Données
 const airComponents = Object.keys(window.airQualityData || {});
 const airValues = Object.values(window.airQualityData || {}).map(v => parseFloat(v.toFixed(2)));
 
-// ✅ Ajout des seuils pour NH₃
+// Seuils de qualité par polluant (µg/m³)
 const ranges = {
   pm2_5: [10, 20, 25, 50],
   pm10: [20, 40, 50, 100],
@@ -575,34 +576,31 @@ const ranges = {
   no2: [40, 90, 120, 230],
   so2: [50, 100, 150, 500],
   co: [1000, 2000, 5000, 10000],
-  nh3: [200, 400, 600, 1000]
+  nh3: [200, 400, 600, 1000]  // ✅ Seuils pour NH₃ (ajoutés)
 };
 
+// Couleurs de qualité (associées aux seuils)
 const palette = ['#4caf50', '#cddc39', '#ffc107', '#ff5722', '#b71c1c'];
 
-const labelsLegend = ['Bon', 'Moyen', 'Modéré', 'Mauvais', 'Très mauvais'];
-
-const datasets = palette.map((color, idx) => {
-  const dataForDataset = airComponents.map((key, i) => {
-    const val = airValues[i];
-    const thresholds = ranges[key] || [];
-    const index = thresholds.findIndex(t => val < t);
-    return (index === idx) ? val : NaN; // NaN : ne trace pas la barre
-  });
-
-  return {
-    label: labelsLegend[idx],
-    data: dataForDataset,
-    backgroundColor: color,
-    yAxisID: 'y',
-  };
+// Attribution des couleurs à chaque composant selon ses seuils
+const colors = airComponents.map((key, i) => {
+  const val = airValues[i];
+  const thresholds = ranges[key] || [];
+  const index = thresholds.findIndex(t => val < t);
+  return palette[index >= 0 ? index : palette.length - 1];
 });
 
+// Création du graphique
 window.airChartInstance = new Chart(ctxAir, {
   type: 'bar',
   data: {
     labels: airComponents,
-    datasets: datasets,
+    datasets: [{
+      label: 'Concentration (µg/m³)',
+      data: airValues,
+      backgroundColor: colors,
+      yAxisID: 'y',
+    }]
   },
   options: {
     responsive: true,
@@ -613,21 +611,13 @@ window.airChartInstance = new Chart(ctxAir, {
       }
     },
     plugins: {
-      legend: { display: true, position: 'top' },
-      tooltip: {
-        enabled: true,
-        callbacks: {
-          label: ctx => {
-            const val = ctx.parsed.y;
-            return val ? `${ctx.dataset.label} : ${val.toFixed(2)} µg/m³` : null;
-          }
-        }
-      },
+      legend: { display: false }, // ✅ Légende en-dessous via HTML
+      tooltip: { enabled: true },
       datalabels: {
         color: '#000',
         anchor: 'end',
         align: 'top',
-        formatter: value => value ? value.toFixed(2) : '',
+        formatter: value => value.toFixed(2),
         font: { weight: 'bold' }
       }
     }
