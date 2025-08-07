@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Météo complète Zimmersheim - améliorée</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0"></script>
   <style>
     body, html {
       margin: 0;
@@ -207,11 +206,6 @@
     <canvas id="windChart"></canvas>
   </section>
 
-<section class="chart-section">
-  <h2>📊 Graphique qualité de l'air</h2>
-  <canvas id="airChart"></canvas>
-</section>
-  
   <script>
     const apiKey = "f59e1314a26b162f41dabbc7bb2b7719";
     const city = "Zimmersheim,fr";
@@ -438,156 +432,6 @@
         }
       });
     }
-
-    async function fetchAirChartData() {
-  const res = await fetch(`https://api.openweathermap.org/data/2.5/air_pollution/forecast?lat=47.7746&lon=7.3373&appid=${apiKey}`);
-  const data = await res.json();
-
-  const labels = [];
-  const pm25 = [];
-  const pm10 = [];
-  const o3 = [];
-  const no2 = [];
-  const so2 = [];
-  const co = [];
-
-  data.list.forEach(item => {
-    const date = new Date(item.dt * 1000);
-    labels.push(date.toLocaleString('fr-FR', { weekday: 'short', hour: '2-digit', minute: '2-digit' }));
-    pm25.push(item.components.pm2_5);
-    pm10.push(item.components.pm10);
-    o3.push(item.components.o3);
-    no2.push(item.components.no2);
-    so2.push(item.components.so2);
-    co.push(item.components.co);
-  });
-
-  const ctxAir = document.getElementById('airChart').getContext('2d');
-  new Chart(ctxAir, {
-  type: 'line',
-  data: {
-    labels,
-    datasets: [
-      {
-        label: "PM2.5 (µg/m³)",
-        data: pm25,
-        borderColor: "red",
-        backgroundColor: "transparent",
-        yAxisID: 'y',
-        tension: 0.3,
-        pointRadius: 2,
-      },
-      {
-        label: "PM10 (µg/m³)",
-        data: pm10,
-        borderColor: "orange",
-        backgroundColor: "transparent",
-        yAxisID: 'y',
-        tension: 0.3,
-        pointRadius: 2,
-      },
-      {
-        label: "O₃ (ozone µg/m³)",
-        data: o3,
-        borderColor: "green",
-        backgroundColor: "transparent",
-        yAxisID: 'y',
-        tension: 0.3,
-        pointRadius: 2,
-      },
-      {
-        label: "NO₂ (µg/m³)",
-        data: no2,
-        borderColor: "blue",
-        backgroundColor: "transparent",
-        yAxisID: 'y',
-        tension: 0.3,
-        pointRadius: 2,
-      },
-      {
-        label: "SO₂ (µg/m³)",
-        data: so2,
-        borderColor: "purple",
-        backgroundColor: "transparent",
-        yAxisID: 'y',
-        tension: 0.3,
-        pointRadius: 2,
-      },
-      {
-        label: "CO (µg/m³)",
-        data: co,
-        borderColor: "gray",
-        backgroundColor: "transparent",
-        yAxisID: 'y',
-        tension: 0.3,
-        pointRadius: 2,
-      }
-    ]
-  },
-  options: {
-    responsive: true,
-    interaction: { mode: 'index', intersect: false },
-    stacked: false,
-    scales: {
-      y: {
-        type: 'linear',
-        position: 'left',
-        title: { display: true, text: 'Concentration µg/m³' },
-        beginAtZero: true,
-      }
-    },
-    plugins: {
-      legend: { position: 'top' },
-      tooltip: {
-        callbacks: {
-          label: context => `${context.dataset.label}: ${context.parsed.y.toFixed(1)} µg/m³`
-        }
-      },
-      annotation: {
-        annotations: {
-          // Zones de seuils générales (pour lisibilité)
-          zoneBonne: {
-            type: 'box',
-            yMin: 0,
-            yMax: 20,
-            backgroundColor: 'rgba(0,255,0,0.08)',
-            label: { content: 'Bonne', enabled: true, position: 'start' }
-          },
-          zoneMoyenne: {
-            type: 'box',
-            yMin: 20,
-            yMax: 40,
-            backgroundColor: 'rgba(255,255,0,0.08)',
-            label: { content: 'Moyenne', enabled: true, position: 'start' }
-          },
-          zoneDegradee: {
-            type: 'box',
-            yMin: 40,
-            yMax: 80,
-            backgroundColor: 'rgba(255,165,0,0.08)',
-            label: { content: 'Dégradée', enabled: true, position: 'start' }
-          },
-          zoneMauvaise: {
-            type: 'box',
-            yMin: 80,
-            yMax: 120,
-            backgroundColor: 'rgba(255,0,0,0.08)',
-            label: { content: 'Mauvaise', enabled: true, position: 'start' }
-          },
-          zoneTresMauvaise: {
-            type: 'box',
-            yMin: 120,
-            yMax: 1000,
-            backgroundColor: 'rgba(128,0,128,0.08)',
-            label: { content: 'Très mauvaise', enabled: true, position: 'start' }
-          }
-        }
-      }
-    }
-  }
-});
-
-fetchAirChartData();
 
     fetchWeather();
     fetchForecast();
