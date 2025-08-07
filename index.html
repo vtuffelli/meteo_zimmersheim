@@ -523,27 +523,33 @@ const ranges = {
 
 const palette = ['#4caf50', '#cddc39', '#ffc107', '#ff5722', '#b71c1c'];
 
-// Construction des datasets, un par couleur/seuil
+const labelsLegend = [
+  'Bon',
+  'Moyen',
+  'Modéré',
+  'Mauvais',
+  'Très mauvais'
+];
+
 const datasets = palette.map((color, idx) => {
+  const dataForDataset = airComponents.map((key, i) => {
+    const val = airValues[i];
+    const thresholds = ranges[key] || [];
+    const index = thresholds.findIndex(t => val < t);
+    return (index === idx) ? val : 0;
+  });
+
+  const backgroundColors = airComponents.map((key, i) => {
+    const val = airValues[i];
+    const thresholds = ranges[key] || [];
+    const index = thresholds.findIndex(t => val < t);
+    return (index === idx) ? color : 'rgba(0,0,0,0)';
+  });
+
   return {
-    label: (() => {
-      // Libellés des seuils pour la légende (à adapter si besoin)
-      const labels = [
-        'Bon',
-        'Moyen',
-        'Modéré',
-        'Mauvais',
-        'Très mauvais'
-      ];
-      return labels[idx] || `Niveau ${idx + 1}`;
-    })(),
-    data: airComponents.map((key, i) => {
-      const val = airValues[i];
-      const thresholds = ranges[key] || [];
-      const index = thresholds.findIndex(t => val < t);
-      return (index === idx) ? val : null; // valeur seulement si dans le seuil
-    }),
-    backgroundColor: color,
+    label: labelsLegend[idx],
+    data: dataForDataset,
+    backgroundColor: backgroundColors,
     yAxisID: 'y',
   };
 });
@@ -569,7 +575,7 @@ window.airChartInstance = new Chart(ctxAir, {
         color: '#000',
         anchor: 'end',
         align: 'top',
-        formatter: value => value ? value.toFixed(2) : '',
+        formatter: value => value > 0 ? value.toFixed(2) : '',
         font: { weight: 'bold' }
       }
     }
