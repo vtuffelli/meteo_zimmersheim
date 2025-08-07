@@ -359,7 +359,7 @@
         nh3: [200, 400, 600, 1000]
       };
 
-      const labels = [' (Bonne)', ' (Acceptable)', ' (Médiocre)', ' (Mauvaise)', ' (Dangereuse)'];
+      const labels = [' (Excellente)', ' (Acceptable)', ' (Moyenne)', ' (Mauvaise)', ' (Très mauvaise)']
       const thresholds = ranges[key];
       if (!thresholds) return '';
       const i = thresholds.findIndex(t => val < t);
