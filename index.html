@@ -539,7 +539,7 @@
       legend: { position: 'top' },
       tooltip: {
         callbacks: {
-          label: context => ${context.dataset.label}: ${context.parsed.y.toFixed(1)} µg/m³
+          label: context => `${context.dataset.label}: ${context.parsed.y.toFixed(1)} µg/m³`
         }
       },
       annotation: {
