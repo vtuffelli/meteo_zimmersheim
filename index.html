@@ -509,60 +509,73 @@ async function fetchForecast() {
   });
 
   // === Graphique qualité de l’air ===
-  const ctxAir = document.getElementById('airChart').getContext('2d');
-  if(window.airChartInstance) window.airChartInstance.destroy();
+const ctxAir = document.getElementById('airChart').getContext('2d');
+if (window.airChartInstance) window.airChartInstance.destroy();
 
-  const airComponents = Object.keys(window.airQualityData || {});
-  const airValues = Object.values(window.airQualityData || {}).map(v => parseFloat(v.toFixed(2)));
+const airComponents = Object.keys(window.airQualityData || {});
+const airValues = Object.values(window.airQualityData || {}).map(v => parseFloat(v.toFixed(2)));
 
-  const ranges = {
-    pm2_5: [10, 20, 25, 50], pm10: [20, 40, 50, 100],
-    o3: [50, 100, 130, 240], no2: [40, 90, 120, 230],
-    so2: [50, 100, 150, 500], co: [1000, 2000, 5000, 10000]
+const ranges = {
+  pm2_5: [10, 20, 25, 50], pm10: [20, 40, 50, 100],
+  o3: [50, 100, 130, 240], no2: [40, 90, 120, 230],
+  so2: [50, 100, 150, 500], co: [1000, 2000, 5000, 10000]
+};
+
+const palette = ['#4caf50', '#cddc39', '#ffc107', '#ff5722', '#b71c1c'];
+
+// Construction des datasets, un par couleur/seuil
+const datasets = palette.map((color, idx) => {
+  return {
+    label: (() => {
+      // Libellés des seuils pour la légende (à adapter si besoin)
+      const labels = [
+        'Bon',
+        'Moyen',
+        'Modéré',
+        'Mauvais',
+        'Très mauvais'
+      ];
+      return labels[idx] || `Niveau ${idx + 1}`;
+    })(),
+    data: airComponents.map((key, i) => {
+      const val = airValues[i];
+      const thresholds = ranges[key] || [];
+      const index = thresholds.findIndex(t => val < t);
+      return (index === idx) ? val : null; // valeur seulement si dans le seuil
+    }),
+    backgroundColor: color,
+    yAxisID: 'y',
   };
-  const palette = ['#4caf50', '#cddc39', '#ffc107', '#ff5722', '#b71c1c'];
+});
 
-  const colors = airComponents.map((key, i) => {
-    const val = airValues[i];
-    const thresholds = ranges[key] || [];
-    const index = thresholds.findIndex(t => val < t);
-    return palette[index >= 0 ? index : palette.length - 1];
-  });
-
-  window.airChartInstance = new Chart(ctxAir, {
-    type: 'bar',
-    data: {
-      labels: airComponents,
-      datasets: [{
-        label: 'Concentration (µg/m³)',
-        data: airValues,
-        backgroundColor: colors,
-        yAxisID: 'y',
-      }]
-    },
-    options: {
-      responsive: true,
-      scales: {
-        y: {
-          beginAtZero: true,
-          title: { display: true, text: 'Concentration (µg/m³)' }
-        }
-      },
-      plugins: {
-        legend: { display: false },
-        tooltip: { enabled: true },
-        datalabels: {
-          color: '#000',
-          anchor: 'end',
-          align: 'top',
-          formatter: value => value.toFixed(2),
-          font: { weight: 'bold' }
-        }
+window.airChartInstance = new Chart(ctxAir, {
+  type: 'bar',
+  data: {
+    labels: airComponents,
+    datasets: datasets,
+  },
+  options: {
+    responsive: true,
+    scales: {
+      y: {
+        beginAtZero: true,
+        title: { display: true, text: 'Concentration (µg/m³)' }
       }
     },
-    plugins: [ChartDataLabels]
-  });
-}
+    plugins: {
+      legend: { display: true, position: 'top' },
+      tooltip: { enabled: true },
+      datalabels: {
+        color: '#000',
+        anchor: 'end',
+        align: 'top',
+        formatter: value => value ? value.toFixed(2) : '',
+        font: { weight: 'bold' }
+      }
+    }
+  },
+  plugins: [ChartDataLabels]
+});
 
     /* ==== Chapitre 11.6 : Initialisation ==== */
     async function init() {
