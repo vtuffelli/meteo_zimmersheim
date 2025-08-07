@@ -482,11 +482,11 @@ async function fetchForecast() {
         x: {
           ticks: {
             callback: function(value, index) {
-              return windDirections[index]; // remplace les labels X par direction du vent
+              return windDirections[index]; // Affiche direction du vent sur X
             }
           },
           grid: {
-            borderDash: [4, 4]
+            borderDash: [4, 4] // pointillés
           }
         },
         y: {
@@ -553,7 +553,7 @@ async function fetchForecast() {
           align: 'end',
           color: '#000',
           font: { weight: 'bold' },
-          formatter: Math.round
+          formatter: value => value.toFixed(2)
         }
       }]
     },
@@ -574,9 +574,9 @@ async function fetchForecast() {
     plugins: [ChartDataLabels]
   });
 
-  // Légende couleur (en dessous du canvas)
+  // Légende qualité de l'air sous le graphique
   const airLegend = `
-    <div style="margin-top:10px;font-size:0.9em">
+    <div style="margin-top:10px; font-size:0.9em;">
       <b>Légende qualité de l'air :</b><br>
       <span style="color:#2ecc71">■</span> Bonne
       <span style="color:#f1c40f">■</span> Acceptable
@@ -584,7 +584,11 @@ async function fetchForecast() {
       <span style="color:#e74c3c">■</span> Mauvaise
       <span style="color:#8e44ad">■</span> Dangereuse
     </div>`;
-  document.getElementById("airChart").insertAdjacentHTML("afterend", airLegend);
+  const airChartElem = document.getElementById("airChart");
+  if (airChartElem.nextSibling) {
+    airChartElem.nextSibling.remove();
+  }
+  airChartElem.insertAdjacentHTML("afterend", airLegend);
 }
 
     /* ==== Chapitre 11.6 : Initialisation ==== */
