@@ -248,7 +248,7 @@
     }
 
     async function fetchWeather() {
-      const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=${units}&lang=${lang}`);
+      const res = await fetch(https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=${units}&lang=${lang});
       const data = await res.json();
 
       document.getElementById("description").textContent = data.weather[0].description;
@@ -258,10 +258,10 @@
       document.getElementById("precip").textContent =
         data.rain?.["1h"] || data.snow?.["1h"] ? ((data.rain?.["1h"] || 0) + (data.snow?.["1h"] || 0)).toFixed(1) + " mm" : "Aucune";
       document.getElementById("wind").textContent = Math.round(data.wind.speed * 3.6);
-      document.getElementById("wind-dir").textContent = `${degToCardinal(data.wind.deg)} (${data.wind.deg}°)`;
+      document.getElementById("wind-dir").textContent = ${degToCardinal(data.wind.deg)} (${data.wind.deg}°);
       document.getElementById("sunrise").textContent = formatTime(data.sys.sunrise);
       document.getElementById("sunset").textContent = formatTime(data.sys.sunset);
-      document.getElementById("condition-icon").src = `https://openweathermap.org/img/wn/${data.weather[0].icon}@4x.png`;
+      document.getElementById("condition-icon").src = https://openweathermap.org/img/wn/${data.weather[0].icon}@4x.png;
 
       // Luminosité estimée corrigée par couverture nuageuse
       const isDay = (Date.now() / 1000 > data.sys.sunrise) && (Date.now() / 1000 < data.sys.sunset);
@@ -277,13 +277,13 @@
     }
 
     async function fetchUV() {
-      const res = await fetch(`https://api.openweathermap.org/data/2.5/uvi?lat=47.7746&lon=7.3373&appid=${apiKey}`);
+      const res = await fetch(https://api.openweathermap.org/data/2.5/uvi?lat=47.7746&lon=7.3373&appid=${apiKey});
       const data = await res.json();
       document.getElementById("uv-index").textContent = data.value;
     }
 
     async function fetchAir() {
-      const res = await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=47.7746&lon=7.3373&appid=${apiKey}`);
+      const res = await fetch(https://api.openweathermap.org/data/2.5/air_pollution?lat=47.7746&lon=7.3373&appid=${apiKey});
       const data = await res.json();
       const a = data.list[0].components;
 
@@ -299,7 +299,7 @@
       };
 
       const html = Object.entries(a).map(([key, val]) =>
-        `<div><b>${desc[key] || key}</b> : ${val} µg/m³ ${interpretAirQuality(key, val)}</div>`
+        <div><b>${desc[key] || key}</b> : ${val} µg/m³ ${interpretAirQuality(key, val)}</div>
       ).join("");
       document.getElementById("air-quality-details").innerHTML = html;
     }
@@ -319,7 +319,7 @@
     }
 
     async function fetchForecast() {
-      const res = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=${units}&lang=${lang}`);
+      const res = await fetch(https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=${units}&lang=${lang});
       const data = await res.json();
 
       const labels = [];
@@ -440,7 +440,7 @@
     }
 
     async function fetchAirChartData() {
-  const res = await fetch(`https://api.openweathermap.org/data/2.5/air_pollution/forecast?lat=47.7746&lon=7.3373&appid=${apiKey}`);
+  const res = await fetch(https://api.openweathermap.org/data/2.5/air_pollution/forecast?lat=47.7746&lon=7.3373&appid=${apiKey});
   const data = await res.json();
 
   const labels = [];
@@ -540,7 +540,7 @@
       legend: { position: 'top' },
       tooltip: {
         callbacks: {
-          label: context => `${context.dataset.label}: ${context.parsed.y.toFixed(1)} µg/m³`
+          label: context => ${context.dataset.label}: ${context.parsed.y.toFixed(1)} µg/m³
         }
       },
       annotation: {
