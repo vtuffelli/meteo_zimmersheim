@@ -227,13 +227,14 @@
     <span id="moon-phase">🌕</span>
   </div>
 </div>
+
     <div id="right-panel">
       <h2 style="text-align:center; padding: 10px 0;">Qualité de l'air - Zimmersheim</h2>
       <div id="air-quality-details"></div>
     </div>
   </div>
 
-    <section class="chart-section">
+  <section class="chart-section">
     <h2>📊 Graphique principal</h2>
     <canvas id="mainChart"></canvas>
   </section>
@@ -244,9 +245,9 @@
   </section>
 
   <section class="chart-section">
-  <h2>📊 Graphique qualité de l'air</h2>
-  <canvas id="airChart"></canvas>
-</section>
+    <h2>📊 Graphique qualité de l'air</h2>
+    <canvas id="airChart"></canvas>
+  </section>
 
   <script>
     const apiKey = "f59e1314a26b162f41dabbc7bb2b7719";
@@ -297,12 +298,11 @@
       document.getElementById("wind-dir").textContent = `${degToCardinal(data.wind.deg)} (${data.wind.deg}°)`;
       document.getElementById("sunrise").textContent = formatTime(data.sys.sunrise);
       document.getElementById("sunset").textContent = formatTime(data.sys.sunset);
-      console.log("Icon code:", data.weather[0].icon);
       document.getElementById("condition-icon").src = `https://openweathermap.org/img/wn/${data.weather[0].icon}@4x.png`;
-document.getElementById('feels-like').textContent = data.feels_like.toFixed(1);
-document.getElementById('temp-min').textContent = data.temp_min.toFixed(1);
-document.getElementById('temp-max').textContent = data.temp_max.toFixed(1);
-document.getElementById('clouds').textContent = data.clouds_all; // en %
+      document.getElementById('feels-like').textContent = data.main.feels_like.toFixed(1);
+      document.getElementById('temp-min').textContent = data.main.temp_min.toFixed(1);
+      document.getElementById('temp-max').textContent = data.main.temp_max.toFixed(1);
+      document.getElementById('clouds').textContent = data.clouds.all; // en %
 
       // Luminosité estimée corrigée par couverture nuageuse
       const isDay = (Date.now() / 1000 > data.sys.sunrise) && (Date.now() / 1000 < data.sys.sunset);
@@ -340,7 +340,7 @@ document.getElementById('clouds').textContent = data.clouds_all; // en %
       };
 
       const html = Object.entries(a).map(([key, val]) =>
-        `<div><b>${desc[key] || key}</b> : ${val} µg/m³ ${interpretAirQuality(key, val)}</div>`
+        `<div><b>${desc[key] || key}</b> : ${val} µg/m³${interpretAirQuality(key, val)}</div>`
       ).join("");
       document.getElementById("air-quality-details").innerHTML = html;
     }
@@ -481,116 +481,115 @@ document.getElementById('clouds').textContent = data.clouds_all; // en %
     }
 
     async function fetchAirChartData() {
-  const res = await fetch(`https://api.openweathermap.org/data/2.5/air_pollution/forecast?lat=47.7746&lon=7.3373&appid=${apiKey}`);
-  const data = await res.json();
+      const res = await fetch(`https://api.openweathermap.org/data/2.5/air_pollution/forecast?lat=47.7746&lon=7.3373&appid=${apiKey}`);
+      const data = await res.json();
 
-  const labels = [];
-  const pm25 = [];
-  const pm10 = [];
-  const o3 = [];
-  const no2 = [];
-  const so2 = [];
-  const co = [];
+      const labels = [];
+      const pm25 = [];
+      const pm10 = [];
+      const o3 = [];
+      const no2 = [];
+      const so2 = [];
+      const co = [];
 
-  data.list.forEach(item => {
-    const date = new Date(item.dt * 1000);
-    labels.push(date.toLocaleString('fr-FR', { weekday: 'short', hour: '2-digit', minute: '2-digit' }));
-    pm25.push(item.components.pm2_5);
-    pm10.push(item.components.pm10);
-    o3.push(item.components.o3);
-    no2.push(item.components.no2);
-    so2.push(item.components.so2);
-    co.push(item.components.co);
-  });
+      data.list.forEach(item => {
+        const date = new Date(item.dt * 1000);
+        labels.push(date.toLocaleString('fr-FR', { weekday: 'short', hour: '2-digit', minute: '2-digit' }));
+        pm25.push(item.components.pm2_5);
+        pm10.push(item.components.pm10);
+        o3.push(item.components.o3);
+        no2.push(item.components.no2);
+        so2.push(item.components.so2);
+        co.push(item.components.co);
+      });
 
-  const ctxAir = document.getElementById('airChart').getContext('2d');
-  new Chart(ctxAir, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [
-        {
-          label: "PM2.5 (µg/m³)",
-          data: pm25,
-          borderColor: "red",
-          backgroundColor: "transparent",
-          yAxisID: 'y',
-          tension: 0.3,
-          pointRadius: 2,
+      const ctxAir = document.getElementById('airChart').getContext('2d');
+      new Chart(ctxAir, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "PM2.5 (µg/m³)",
+              data: pm25,
+              borderColor: "red",
+              backgroundColor: "transparent",
+              yAxisID: 'y',
+              tension: 0.3,
+              pointRadius: 2,
+            },
+            {
+              label: "PM10 (µg/m³)",
+              data: pm10,
+              borderColor: "orange",
+              backgroundColor: "transparent",
+              yAxisID: 'y',
+              tension: 0.3,
+              pointRadius: 2,
+            },
+            {
+              label: "O₃ (ozone µg/m³)",
+              data: o3,
+              borderColor: "green",
+              backgroundColor: "transparent",
+              yAxisID: 'y',
+              tension: 0.3,
+              pointRadius: 2,
+            },
+            {
+              label: "NO₂ (µg/m³)",
+              data: no2,
+              borderColor: "blue",
+              backgroundColor: "transparent",
+              yAxisID: 'y',
+              tension: 0.3,
+              pointRadius: 2,
+            },
+            {
+              label: "SO₂ (µg/m³)",
+              data: so2,
+              borderColor: "purple",
+              backgroundColor: "transparent",
+              yAxisID: 'y',
+              tension: 0.3,
+              pointRadius: 2,
+            },
+            {
+              label: "CO (µg/m³)",
+              data: co,
+              borderColor: "gray",
+              backgroundColor: "transparent",
+              yAxisID: 'y',
+              tension: 0.3,
+              pointRadius: 2,
+            }
+          ]
         },
-        {
-          label: "PM10 (µg/m³)",
-          data: pm10,
-          borderColor: "orange",
-          backgroundColor: "transparent",
-          yAxisID: 'y',
-          tension: 0.3,
-          pointRadius: 2,
-        },
-        {
-          label: "O₃ (ozone µg/m³)",
-          data: o3,
-          borderColor: "green",
-          backgroundColor: "transparent",
-          yAxisID: 'y',
-          tension: 0.3,
-          pointRadius: 2,
-        },
-        {
-          label: "NO₂ (µg/m³)",
-          data: no2,
-          borderColor: "blue",
-          backgroundColor: "transparent",
-          yAxisID: 'y',
-          tension: 0.3,
-          pointRadius: 2,
-        },
-        {
-          label: "SO₂ (µg/m³)",
-          data: so2,
-          borderColor: "purple",
-          backgroundColor: "transparent",
-          yAxisID: 'y',
-          tension: 0.3,
-          pointRadius: 2,
-        },
-        {
-          label: "CO (µg/m³)",
-          data: co,
-          borderColor: "gray",
-          backgroundColor: "transparent",
-          yAxisID: 'y',
-          tension: 0.3,
-          pointRadius: 2,
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      interaction: { mode: 'index', intersect: false },
-      stacked: false,
-      scales: {
-        y: {
-          type: 'linear',
-          position: 'left',
-          title: { display: true, text: 'Concentration µg/m³' },
-          beginAtZero: true
-        }
-      },
-      plugins: {
-        legend: { position: 'top' },
-        tooltip: {
-          callbacks: {
-            label: context => `${context.dataset.label}: ${context.parsed.y.toFixed(1)} µg/m³`
+        options: {
+          responsive: true,
+          interaction: { mode: 'index', intersect: false },
+          stacked: false,
+          scales: {
+            y: {
+              type: 'linear',
+              position: 'left',
+              title: { display: true, text: 'Concentration µg/m³' },
+              beginAtZero: true
+            }
+          },
+          plugins: {
+            legend: { position: 'top' },
+            tooltip: {
+              callbacks: {
+                label: context => `${context.dataset.label}: ${context.parsed.y.toFixed(1)} µg/m³`
+              }
+            }
           }
         }
-      }
+      });
     }
-  });
-}
 
-fetchAirChartData();
-
+    fetchAirChartData();
     fetchWeather();
     fetchForecast();
     fetchUV();
