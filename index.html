@@ -328,18 +328,16 @@
       return labels[i >= 0 ? i : labels.length - 1];
     }
 
-        /* ==== Chapitre 11.5 : Fetch prévisions météo ==== */
+    /* ==== Chapitre 11.5 : Fetch prévisions météo ==== */
     async function fetchForecast() {
       const res = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=${units}&lang=${lang}`);
       const data = await res.json();
 
-      // Extraire les labels (dates) et données pour le graphique principal
       const labels = data.list.map(item => {
         const dt = new Date(item.dt * 1000);
         return dt.toLocaleString('fr-FR', { hour: '2-digit', day: '2-digit', month: '2-digit' });
       });
 
-      // Données principales : Température, Humidité, Précipitations, Pression
       const temps = data.list.map(item => item.main.temp);
       const humidity = data.list.map(item => item.main.humidity);
       const pressure = data.list.map(item => item.main.pressure);
@@ -347,15 +345,9 @@
         return (item.rain?.["3h"] || 0) + (item.snow?.["3h"] || 0);
       });
 
-      // Données secondaires : Vent, Direction, Couverture nuageuse, UV (estimé)
       const windSpeed = data.list.map(item => item.wind.speed * 3.6); // km/h
-      const windDeg = data.list.map(item => item.wind.deg);
       const clouds = data.list.map(item => item.clouds.all);
 
-      // Estimation UV dans les prévisions (OpenWeather ne donne pas UV dans forecast, on utilise UV actuel)
-      const uvIndexForecast = new Array(data.list.length).fill(uvValueGlobal);
-
-      // Construire le graphique principal
       const ctxMain = document.getElementById('mainChart').getContext('2d');
       if(window.mainChartInstance) window.mainChartInstance.destroy();
       window.mainChartInstance = new Chart(ctxMain, {
@@ -369,7 +361,7 @@
               borderColor: 'rgba(255, 99, 132, 0.8)',
               backgroundColor: 'rgba(255, 99, 132, 0.2)',
               yAxisID: 'y',
-              fill: true,
+              fill: false,
               tension: 0.3,
             },
             {
@@ -378,7 +370,7 @@
               borderColor: 'rgba(54, 162, 235, 0.8)',
               backgroundColor: 'rgba(54, 162, 235, 0.2)',
               yAxisID: 'y1',
-              fill: true,
+              fill: false,
               tension: 0.3,
             },
             {
@@ -394,7 +386,7 @@
               borderColor: 'rgba(255, 206, 86, 0.8)',
               backgroundColor: 'rgba(255, 206, 86, 0.2)',
               yAxisID: 'y3',
-              fill: true,
+              fill: false,
               tension: 0.3,
             }
           ]
@@ -451,7 +443,6 @@
         }
       });
 
-      // Construire le graphique secondaire (vent, direction, UV, couverture nuageuse)
       const ctxWind = document.getElementById('windChart').getContext('2d');
       if(window.windChartInstance) window.windChartInstance.destroy();
       window.windChartInstance = new Chart(ctxWind, {
@@ -465,16 +456,7 @@
               borderColor: 'rgba(0, 123, 255, 0.8)',
               backgroundColor: 'rgba(0, 123, 255, 0.2)',
               yAxisID: 'y',
-              fill: true,
-              tension: 0.3,
-            },
-            {
-              label: 'Indice UV',
-              data: uvIndexForecast,
-              borderColor: 'rgba(255, 165, 0, 0.8)',
-              backgroundColor: 'rgba(255, 165, 0, 0.2)',
-              yAxisID: 'y1',
-              fill: true,
+              fill: false,
               tension: 0.3,
             },
             {
@@ -483,7 +465,7 @@
               borderColor: 'rgba(128, 128, 128, 0.8)',
               backgroundColor: 'rgba(128, 128, 128, 0.2)',
               yAxisID: 'y2',
-              fill: true,
+              fill: false,
               tension: 0.3,
             }
           ]
@@ -502,16 +484,6 @@
               position: 'left',
               title: { display: true, text: 'Vent (km/h)' },
               min: 0,
-            },
-            y1: {
-              type: 'linear',
-              display: true,
-              position: 'right',
-              grid: { drawOnChartArea: false },
-              title: { display: true, text: 'Indice UV' },
-              min: 0,
-              max: 11,
-              offset: true,
             },
             y2: {
               type: 'linear',
@@ -533,12 +505,29 @@
         }
       });
 
-      // Construire le graphique qualité de l’air (exemple simplifié)
       const ctxAir = document.getElementById('airChart').getContext('2d');
       if(window.airChartInstance) window.airChartInstance.destroy();
-      // Reprendre les données qualité de l'air
-      const airComponents = Object.keys(window.airQualityData || {}).map(key => key);
+      const airComponents = Object.keys(window.airQualityData || {});
       const airValues = Object.values(window.airQualityData || {});
+
+      const airColors = airComponents.map((key, i) => {
+        const val = airValues[i];
+        const thresholds = {
+          pm2_5: [10, 20, 25, 50],
+          pm10: [20, 40, 50, 100],
+          o3: [50, 100, 130, 240],
+          no2: [40, 90, 120, 230],
+          so2: [50, 100, 150, 500],
+          co: [1000, 2000, 5000, 10000],
+          nh3: [200, 400, 600, 800]
+        };
+        const palette = ['#2ecc71', '#f1c40f', '#e67e22', '#e74c3c', '#8e44ad'];
+        const t = thresholds[key];
+        if (!t) return '#3498db';
+        const idx = t.findIndex(th => val < th);
+        return palette[idx >= 0 ? idx : 4];
+      });
+
       window.airChartInstance = new Chart(ctxAir, {
         type: 'bar',
         data: {
@@ -546,7 +535,7 @@
           datasets: [{
             label: 'Concentration (µg/m³)',
             data: airValues,
-            backgroundColor: 'rgba(54, 162, 235, 0.7)'
+            backgroundColor: airColors
           }]
         },
         options: {
@@ -562,6 +551,18 @@
           }
         }
       });
+
+      // Ajouter une légende sous le graphique qualité de l'air
+      const airLegend = `
+        <div style="margin-top:10px;font-size:0.9em">
+          <b>Légende qualité de l'air :</b><br>
+          <span style="color:#2ecc71">■</span> Bonne
+          <span style="color:#f1c40f">■</span> Acceptable
+          <span style="color:#e67e22">■</span> Médiocre
+          <span style="color:#e74c3c">■</span> Mauvaise
+          <span style="color:#8e44ad">■</span> Dangereuse
+        </div>`;
+      document.getElementById("airChart").insertAdjacentHTML("afterend", airLegend);
     }
 
     /* ==== Chapitre 11.6 : Initialisation ==== */
