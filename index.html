@@ -201,7 +201,11 @@
   <img id="condition-icon" src="" alt="Icône météo" />
   <div class="info-row"><span class="label">Condition :</span> <span id="description"></span></div>
   <div class="info-row"><span class="label">Température :</span> <span id="temp"></span> °C</div>
+  <div class="info-row"><span class="label">Température ressentie :</span> <span id="feels-like"></span> °C</div>
+  <div class="info-row"><span class="label">Température min :</span> <span id="temp-min"></span> °C</div>
+  <div class="info-row"><span class="label">Température max :</span> <span id="temp-max"></span> °C</div>
   <div class="info-row"><span class="label">Humidité :</span> <span id="humidity"></span> %</div>
+  <div class="info-row"><span class="label">Couverture nuageuse :</span> <span id="clouds"></span> %</div>
   <div class="info-row"><span class="label">Précipitations (1h) :</span> <span id="precip"></span></div>
   <div class="info-row"><span class="label">Pression :</span> <span id="pressure"></span> hPa</div>
   <div class="info-row">
@@ -295,6 +299,10 @@
       document.getElementById("sunset").textContent = formatTime(data.sys.sunset);
       console.log("Icon code:", data.weather[0].icon);
       document.getElementById("condition-icon").src = `https://openweathermap.org/img/wn/${data.weather[0].icon}@4x.png`;
+document.getElementById('feels-like').textContent = data.feels_like.toFixed(1);
+document.getElementById('temp-min').textContent = data.temp_min.toFixed(1);
+document.getElementById('temp-max').textContent = data.temp_max.toFixed(1);
+document.getElementById('clouds').textContent = data.clouds_all; // en %
 
       // Luminosité estimée corrigée par couverture nuageuse
       const isDay = (Date.now() / 1000 > data.sys.sunrise) && (Date.now() / 1000 < data.sys.sunset);
