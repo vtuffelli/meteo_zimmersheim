@@ -331,6 +331,11 @@
     }
 
 /* ==== Chapitre 11.5 : Fetch prévisions météo ==== */
+function degToDirectionIndex(deg) {
+  return Math.round(deg / 22.5) % 16;
+}
+const windDirs = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSO", "SO", "OSO", "O", "ONO", "NO", "NNO"];
+
 async function fetchForecast() {
   const res = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=${units}&lang=${lang}`);
   const data = await res.json();
@@ -357,7 +362,7 @@ async function fetchForecast() {
   window.mainChartInstance = new Chart(ctxMain, {
     type: 'line',
     data: {
-      labels: labels,
+      labels,
       datasets: [
         {
           label: 'Température (°C)',
@@ -399,13 +404,11 @@ async function fetchForecast() {
       scales: {
         y: {
           type: 'linear',
-          display: true,
           position: 'left',
           title: { display: true, text: 'Température (°C)' },
         },
         y1: {
           type: 'linear',
-          display: true,
           position: 'right',
           grid: { drawOnChartArea: false },
           title: { display: true, text: 'Humidité (%)' },
@@ -413,7 +416,6 @@ async function fetchForecast() {
         },
         y2: {
           type: 'linear',
-          display: true,
           position: 'right',
           grid: { drawOnChartArea: false },
           title: { display: true, text: 'Précipitations (mm)' },
@@ -421,7 +423,6 @@ async function fetchForecast() {
         },
         y3: {
           type: 'linear',
-          display: true,
           position: 'left',
           grid: { drawOnChartArea: false },
           title: { display: true, text: 'Pression (hPa)' },
@@ -436,13 +437,13 @@ async function fetchForecast() {
     }
   });
 
-  // === Graphique secondaire (vent, orientation, nuages) ===
+  // === Graphique secondaire (vent, orientation, couverture nuageuse) ===
   const ctxWind = document.getElementById('windChart').getContext('2d');
   if(window.windChartInstance) window.windChartInstance.destroy();
   window.windChartInstance = new Chart(ctxWind, {
     type: 'line',
     data: {
-      labels: labels,
+      labels,
       datasets: [
         {
           label: 'Vent (km/h)',
@@ -461,7 +462,7 @@ async function fetchForecast() {
           tension: 0.3,
         },
         {
-          label: 'Orientation du vent',
+          label: 'Orientation vent',
           data: windDirIndex,
           borderColor: 'rgba(255, 99, 71, 0.9)',
           borderDash: [5, 5],
@@ -483,9 +484,8 @@ async function fetchForecast() {
         },
         y2: {
           position: 'right',
-          title: { display: true, text: 'Couverture nuageuse (%)' },
-          min: 0,
-          max: 100,
+          title: { display: true, text: 'Nuages (%)' },
+          min: 0, max: 100,
           grid: { drawOnChartArea: false },
         },
         y3: {
@@ -496,9 +496,7 @@ async function fetchForecast() {
           grid: { drawOnChartArea: false },
           ticks: {
             stepSize: 1,
-            callback: function(value) {
-              return windDirs[value] || '';
-            }
+            callback: (value) => windDirs[value] || '',
           }
         }
       },
@@ -515,16 +513,18 @@ async function fetchForecast() {
 
   const airComponents = Object.keys(window.airQualityData || {});
   const airValues = Object.values(window.airQualityData || {}).map(v => parseFloat(v.toFixed(2)));
+
+  const ranges = {
+    pm2_5: [10, 20, 25, 50], pm10: [20, 40, 50, 100],
+    o3: [50, 100, 130, 240], no2: [40, 90, 120, 230],
+    so2: [50, 100, 150, 500], co: [1000, 2000, 5000, 10000]
+  };
+  const palette = ['#4caf50', '#cddc39', '#ffc107', '#ff5722', '#b71c1c'];
+
   const colors = airComponents.map((key, i) => {
     const val = airValues[i];
-    const ranges = {
-      pm2_5: [10, 20, 25, 50], pm10: [20, 40, 50, 100],
-      o3: [50, 100, 130, 240], no2: [40, 90, 120, 230],
-      so2: [50, 100, 150, 500], co: [1000, 2000, 5000, 10000]
-    };
     const thresholds = ranges[key] || [];
     const index = thresholds.findIndex(t => val < t);
-    const palette = ['#4caf50', '#cddc39', '#ffc107', '#ff5722', '#b71c1c'];
     return palette[index >= 0 ? index : palette.length - 1];
   });
 
@@ -541,21 +541,21 @@ async function fetchForecast() {
     },
     options: {
       responsive: true,
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: 'Concentration (µg/m³)' }
+        }
+      },
       plugins: {
         legend: { display: false },
         tooltip: { enabled: true },
         datalabels: {
           color: '#000',
           anchor: 'end',
-          align: 'start',
+          align: 'top',
           formatter: value => value.toFixed(2),
           font: { weight: 'bold' }
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          title: { display: true, text: 'Concentration (µg/m³)' }
         }
       }
     },
