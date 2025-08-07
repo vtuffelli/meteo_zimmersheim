@@ -335,60 +335,43 @@ async function fetchForecast() {
   const res = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=${units}&lang=${lang}`);
   const data = await res.json();
 
-  // Extraire les labels (dates) pour le graphique principal
   const labels = data.list.map(item => {
     const dt = new Date(item.dt * 1000);
     return dt.toLocaleString('fr-FR', { hour: '2-digit', day: '2-digit', month: '2-digit' });
   });
 
-  // Données principales : Température, Humidité, Précipitations, Pression
   const temps = data.list.map(item => item.main.temp);
   const humidity = data.list.map(item => item.main.humidity);
   const pressure = data.list.map(item => item.main.pressure);
-  const precipitation = data.list.map(item => {
-    return (item.rain?.["3h"] || 0) + (item.snow?.["3h"] || 0);
-  });
-
-  // Données secondaires : Vent, Direction, Couverture nuageuse
-  const windSpeed = data.list.map(item => item.wind.speed * 3.6); // km/h
+  const precipitation = data.list.map(item => (item.rain?.["3h"] || 0) + (item.snow?.["3h"] || 0));
+  const windSpeed = data.list.map(item => item.wind.speed * 3.6);
   const windDeg = data.list.map(item => item.wind.deg);
   const clouds = data.list.map(item => item.clouds.all);
 
-  // Convertir degrés vent en direction cardinale
-  function degToCardinal(deg) {
-    const dirs = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
-                  "S", "SSO", "SO", "OSO", "O", "ONO", "NO", "NNO"];
-    return dirs[Math.round(deg / 22.5) % 16];
-  }
-  const windDirections = windDeg.map(deg => degToCardinal(deg));
+  const windDirLabels = windDeg.map(deg => degToCardinal(deg));
 
-  // Estimation UV dans les prévisions (OpenWeather ne donne pas UV dans forecast, on utilise UV actuel)
-  const uvIndexForecast = new Array(data.list.length).fill(uvValueGlobal);
-
-  // Construire le graphique principal
+  // === Graphique principal ===
   const ctxMain = document.getElementById('mainChart').getContext('2d');
-  if(window.mainChartInstance) window.mainChartInstance.destroy();
+  if (window.mainChartInstance) window.mainChartInstance.destroy();
   window.mainChartInstance = new Chart(ctxMain, {
     type: 'line',
     data: {
-      labels: labels,
+      labels,
       datasets: [
         {
           label: 'Température (°C)',
           data: temps,
           borderColor: 'rgba(255, 99, 132, 0.8)',
-          backgroundColor: 'rgba(255, 99, 132, 0.2)',
+          fill: false,
           yAxisID: 'y',
-          fill: true,
           tension: 0.3,
         },
         {
           label: 'Humidité (%)',
           data: humidity,
           borderColor: 'rgba(54, 162, 235, 0.8)',
-          backgroundColor: 'rgba(54, 162, 235, 0.2)',
+          fill: false,
           yAxisID: 'y1',
-          fill: true,
           tension: 0.3,
         },
         {
@@ -402,30 +385,22 @@ async function fetchForecast() {
           label: 'Pression (hPa)',
           data: pressure,
           borderColor: 'rgba(255, 206, 86, 0.8)',
-          backgroundColor: 'rgba(255, 206, 86, 0.2)',
+          fill: false,
           yAxisID: 'y3',
-          fill: true,
           tension: 0.3,
         }
       ]
     },
     options: {
       responsive: true,
-      interaction: {
-        mode: 'index',
-        intersect: false,
-      },
+      interaction: { mode: 'index', intersect: false },
       stacked: false,
       scales: {
         y: {
-          type: 'linear',
-          display: true,
           position: 'left',
           title: { display: true, text: 'Température (°C)' },
         },
         y1: {
-          type: 'linear',
-          display: true,
           position: 'right',
           grid: { drawOnChartArea: false },
           title: { display: true, text: 'Humidité (%)' },
@@ -433,16 +408,12 @@ async function fetchForecast() {
           max: 100,
         },
         y2: {
-          type: 'linear',
-          display: true,
           position: 'right',
           grid: { drawOnChartArea: false },
           title: { display: true, text: 'Précipitations (mm)' },
           min: 0,
         },
         y3: {
-          type: 'linear',
-          display: true,
           position: 'left',
           grid: { drawOnChartArea: false },
           title: { display: true, text: 'Pression (hPa)' },
@@ -453,93 +424,104 @@ async function fetchForecast() {
       },
       plugins: {
         legend: { position: 'top' },
-        tooltip: {
-          mode: 'index',
-          intersect: false,
-        }
+        tooltip: { mode: 'index', intersect: false }
       }
     }
   });
 
-  // Construire le graphique secondaire (vent + couverture nuageuse + direction vent)
+  // === Graphique secondaire ===
   const ctxWind = document.getElementById('windChart').getContext('2d');
-  if(window.windChartInstance) window.windChartInstance.destroy();
+  if (window.windChartInstance) window.windChartInstance.destroy();
   window.windChartInstance = new Chart(ctxWind, {
     type: 'line',
     data: {
-      labels: windDirections,
+      labels,
       datasets: [
         {
           label: 'Vent (km/h)',
           data: windSpeed,
           borderColor: 'rgba(0, 123, 255, 0.8)',
-          backgroundColor: 'rgba(0, 123, 255, 0.2)',
-          yAxisID: 'y',
           fill: false,
+          yAxisID: 'y',
           tension: 0.3,
         },
         {
           label: 'Couverture nuageuse (%)',
           data: clouds,
           borderColor: 'rgba(128, 128, 128, 0.8)',
-          backgroundColor: 'rgba(128, 128, 128, 0.2)',
-          yAxisID: 'y2',
           fill: false,
+          yAxisID: 'y2',
+          tension: 0.3,
+        },
+        {
+          label: 'Orientation du vent (°)',
+          data: windDeg,
+          borderColor: 'rgba(255, 99, 71, 0.9)',
+          fill: false,
+          yAxisID: 'y3',
           tension: 0.3,
         }
       ]
     },
     options: {
       responsive: true,
-      interaction: {
-        mode: 'index',
-        intersect: false,
-      },
+      interaction: { mode: 'index', intersect: false },
       stacked: false,
       scales: {
         x: {
-          ticks: {
-            autoSkip: false,
-            maxRotation: 45,
-            minRotation: 45,
-          },
-          grid: {
-            borderDash: [4, 4],
-          },
+          grid: { borderDash: [4, 4] },
         },
         y: {
-          type: 'linear',
-          display: true,
           position: 'left',
           title: { display: true, text: 'Vent (km/h)' },
           min: 0,
         },
         y2: {
-          type: 'linear',
-          display: true,
           position: 'right',
-          grid: { drawOnChartArea: false },
           title: { display: true, text: 'Couverture nuageuse (%)' },
           min: 0,
           max: 100,
+          grid: { drawOnChartArea: false },
+        },
+        y3: {
+          position: 'right',
+          title: { display: true, text: 'Orientation vent (°)' },
+          min: 0,
+          max: 360,
+          grid: { drawOnChartArea: false },
         }
       },
       plugins: {
         legend: { position: 'top' },
-        tooltip: {
-          mode: 'index',
-          intersect: false,
-        }
+        tooltip: { mode: 'index', intersect: false }
       }
     }
   });
 
-  // Construire le graphique qualité de l’air (barres avec valeurs et double échelle)
+  // === Graphique qualité de l’air ===
   const ctxAir = document.getElementById('airChart').getContext('2d');
-  if(window.airChartInstance) window.airChartInstance.destroy();
+  if (window.airChartInstance) window.airChartInstance.destroy();
 
   const airComponents = Object.keys(window.airQualityData || {});
   const airValues = Object.values(window.airQualityData || {});
+  const thresholds = {
+    pm2_5: [10, 20, 25, 50],
+    pm10: [20, 40, 50, 100],
+    o3: [50, 100, 130, 240],
+    no2: [40, 90, 120, 230],
+    so2: [50, 100, 150, 500],
+    co: [1000, 2000, 5000, 10000],
+    nh3: [200, 400, 600, 800]
+  };
+
+  const palette = ['#2ecc71', '#f1c40f', '#e67e22', '#e74c3c', '#8e44ad'];
+  const airColors = airComponents.map((key, i) => {
+    const val = airValues[i];
+    const t = thresholds[key];
+    if (!t) return '#3498db';
+    const idx = t.findIndex(th => val < th);
+    return palette[idx >= 0 ? idx : 4];
+  });
 
   window.airChartInstance = new Chart(ctxAir, {
     type: 'bar',
@@ -548,15 +530,14 @@ async function fetchForecast() {
       datasets: [{
         label: 'Concentration (µg/m³)',
         data: airValues,
-        backgroundColor: airComponents.map(key => {
-          // Couleur selon la qualité, tu peux ajuster si tu veux
-          const val = window.airQualityData[key];
-          if (!val) return 'rgba(54, 162, 235, 0.7)';
-          if (val < 20) return 'rgba(54, 162, 235, 0.7)'; // bonne
-          if (val < 40) return 'rgba(255, 206, 86, 0.7)'; // acceptable
-          if (val < 60) return 'rgba(255, 159, 64, 0.7)'; // médiocre
-          return 'rgba(255, 99, 132, 0.7)'; // mauvaise/dangereuse
-        })
+        backgroundColor: airColors,
+        datalabels: {
+          anchor: 'end',
+          align: 'end',
+          color: '#000',
+          font: { weight: 'bold' },
+          formatter: value => value.toFixed(2)
+        }
       }]
     },
     options: {
@@ -564,31 +545,30 @@ async function fetchForecast() {
       scales: {
         y: {
           beginAtZero: true,
-          ticks: {
-            callback: function(value) {
-              return value.toFixed(2);
-            }
-          },
-          title: {
-            display: true,
-            text: 'Concentration (µg/m³)'
-          }
+          title: { display: true, text: 'µg/m³' }
         }
       },
       plugins: {
+        datalabels: {},
         legend: { display: false },
-        tooltip: { enabled: true },
-        datalabels: {
-          anchor: 'end',
-          align: 'top',
-          formatter: function(value) {
-            return value.toFixed(2);
-          }
-        }
+        tooltip: { enabled: true }
       }
     },
     plugins: [ChartDataLabels]
   });
+
+  const airLegend = `
+    <div style="margin-top:10px; font-size:0.9em;">
+      <b>Légende qualité de l'air :</b><br>
+      <span style="color:#2ecc71">■</span> Bonne
+      <span style="color:#f1c40f">■</span> Acceptable
+      <span style="color:#e67e22">■</span> Médiocre
+      <span style="color:#e74c3c">■</span> Mauvaise
+      <span style="color:#8e44ad">■</span> Dangereuse
+    </div>`;
+  const airChartElem = document.getElementById("airChart");
+  if (airChartElem.nextSibling) airChartElem.nextSibling.remove();
+  airChartElem.insertAdjacentHTML("afterend", airLegend);
 }
 
     /* ==== Chapitre 11.6 : Initialisation ==== */
