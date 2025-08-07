@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Météo complète Zimmersheim - améliorée</title>
+  <title>Météo complète</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
   <style>
@@ -159,7 +159,7 @@
 
     <!-- ==== Chapitre 8 : Panneau gauche - météo actuelle ==== -->
     <div id="left-panel">
-      <h1>Météo actuelle - Zimmersheim</h1>
+      <h1>Météo actuelle</h1>
       <img id="condition-icon" src="" alt="Icône météo" />
       <div class="info-row"><span class="label">Condition :</span> <span id="description"></span></div>
       <div class="info-row"><span class="label">Température :</span> <span id="temp"></span> °C</div>
@@ -192,26 +192,68 @@
 
     <!-- ==== Chapitre 9 : Panneau droit - qualité de l'air ==== -->
     <div id="right-panel">
-      <h2 style="text-align:center; padding: 10px 0;">Qualité de l'air - Zimmersheim</h2>
+      <h2 style="text-align:center; padding: 10px 0;">Qualité de l'air</h2>
       <div id="air-quality-details"></div>
     </div>
   </div>
 
-  <!-- ==== Chapitre 10 : Sections graphiques ==== -->
-  <section class="chart-section">
-    <h2>📊 Graphique principal</h2>
-    <canvas id="mainChart"></canvas>
-  </section>
+<!-- ==== Chapitre 10 : Sections graphiques ==== -->
+<section class="chart-section">
+  <h2>📊 Graphique principal</h2>
+  <canvas id="mainChart"></canvas>
+</section>
 
-  <section class="chart-section">
-    <h2>📊 Graphique secondaire (vent + UV + nuages)</h2>
-    <canvas id="windChart"></canvas>
-  </section>
+<section class="chart-section">
+  <h2>📊 Graphique secondaire (vent + nuages)</h2>
+  <canvas id="windChart"></canvas>
+</section>
 
-  <section class="chart-section">
-    <h2>📊 Graphique qualité de l'air</h2>
-    <canvas id="airChart"></canvas>
-  </section>
+<section class="chart-section">
+  <h2>📊 Graphique qualité de l'air</h2>
+  <canvas id="airChart"></canvas>
+
+  <!-- ✅ Légende sous le graphique qualité de l’air -->
+  <div id="airLegend" class="air-legend">
+    <div><span style="background-color:#4caf50;"></span> Bon</div>
+    <div><span style="background-color:#cddc39;"></span> Moyen</div>
+    <div><span style="background-color:#ffc107;"></span> Modéré</div>
+    <div><span style="background-color:#ff5722;"></span> Mauvais</div>
+    <div><span style="background-color:#b71c1c;"></span> Très mauvais</div>
+  </div>
+</section>
+
+<!-- ✅ Le style CSS à mettre soit dans un fichier CSS, soit entre <style> dans le <head> -->
+<style>
+  .air-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 1rem;
+    gap: 1rem;
+    font-family: sans-serif;
+    font-size: 14px;
+  }
+
+  .air-legend div {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .air-legend span {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+  }
+
+  @media (max-width: 600px) {
+    .air-legend {
+      flex-direction: column;
+      align-items: center;
+    }
+  }
+</style>
 
   <!-- ==== Chapitre 11 : Scripts ==== -->
   <script>
