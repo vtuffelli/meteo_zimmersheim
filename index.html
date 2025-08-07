@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -387,7 +388,7 @@ async function fetchForecast() {
 
   const windSpeed = data.list.map(item => item.wind.speed * 3.6);
   const windDeg = data.list.map(item => item.wind.deg);
-  const arrowRotations = windDeg.map(deg => (deg + 180) % 360);
+  const windDirIndex = windDeg.map(deg => degToDirectionIndex(deg));
   const clouds = data.list.map(item => item.clouds.all);
   const uvIndexForecast = new Array(data.list.length).fill(uvValueGlobal);
 
