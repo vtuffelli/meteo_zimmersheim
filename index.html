@@ -196,38 +196,35 @@
   }
 </style>
 
-<div id="left-panel">
-  <h1>Météo actuelle - Zimmersheim</h1>
-  <img id="condition-icon" src="" alt="Icône météo" />
-  <div class="info-row"><span class="label">Condition :</span> <span id="description"></span></div>
-  <div class="info-row"><span class="label">Température :</span> <span id="temp"></span> °C</div>
-  <div class="info-row"><span class="label">Humidité :</span> <span id="humidity"></span> %</div>
-  <div class="info-row"><span class="label">Précipitations (1h) :</span> <span id="precip"></span></div>
-  <div class="info-row"><span class="label">Pression :</span> <span id="pressure"></span> hPa</div>
-  <div class="info-row">
-    <span class="label">Vent :</span>
-    <span id="wind"></span> km/h
-    <svg id="wind-arrow" viewBox="0 0 24 24" fill="none" stroke="#0077cc" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-      <line x1="12" y1="19" x2="12" y2="5"></line>
-      <polyline points="5 12 12 5 19 12"></polyline>
-    </svg>
-  </div>
-  <div class="info-row"><span class="label">Direction vent :</span> <span id="wind-dir"></span></div>
-  <div class="info-row"><span class="label">Lever du soleil :</span> <span id="sunrise"></span></div>
-  <div class="info-row"><span class="label">Coucher du soleil :</span> <span id="sunset"></span></div>
-  <div class="info-row"><span class="label">Ensoleillement :</span> <span id="sunlight"></span> %</div>
-  <div class="info-row"><span class="label">Indice UV :</span> <span id="uv-index"></span></div>
-  <div class="info-row">
-    <span class="label">Phase lunaire :</span>
-    <span id="moon-phase-desc">Pleine lune</span>
-    <span id="moon-phase">🌕</span>
-  </div>
-</div>
-    <div id="right-panel">
-      <h2 style="text-align:center; padding: 10px 0;">Qualité de l'air - Zimmersheim</h2>
-      <div id="air-quality-details"></div>
-    </div>
-  </div>
+<script>
+  function updateThumb(aqi) {
+    const thumb = document.getElementById("thumb-icon");
+    const container = document.getElementById("air-quality-container");
+    const width = container.clientWidth;
+
+    // Position du pouce : de 0 (bon) à 300+ (très mauvais)
+    const maxAQI = 300;
+    const pos = Math.min(aqi, maxAQI) / maxAQI * (width - 32); // 32px = largeur approximative du pouce
+    thumb.style.left = `${pos}px`;
+
+    // Couleur par filtre CSS (pour éviter plusieurs emojis)
+    if (aqi <= 50) {
+      thumb.style.filter = "hue-rotate(90deg)"; // vert
+    } else if (aqi <= 100) {
+      thumb.style.filter = "hue-rotate(60deg)"; // jaune
+    } else if (aqi <= 150) {
+      thumb.style.filter = "hue-rotate(20deg)"; // orange
+    } else if (aqi <= 200) {
+      thumb.style.filter = "hue-rotate(0deg) brightness(1.2)"; // rouge
+    } else {
+      thumb.style.filter = "hue-rotate(300deg)"; // violet
+    }
+  }
+
+  // Exemple : simuler la mise à jour avec PM2.5
+  const pm25 = parseFloat(document.getElementById("pm25").textContent);
+  updateThumb(pm25 * 10); // échelle simplifiée AQI ~ PM2.5 x 10
+</script>
 
     <section class="chart-section">
     <h2>📊 Graphique principal</h2>
