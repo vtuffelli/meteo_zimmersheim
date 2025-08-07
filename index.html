@@ -181,7 +181,6 @@
       <div class="info-row"><span class="label">Direction vent :</span> <span id="wind-dir"></span></div>
       <div class="info-row"><span class="label">Lever du soleil :</span> <span id="sunrise"></span></div>
       <div class="info-row"><span class="label">Coucher du soleil :</span> <span id="sunset"></span></div>
-      <div class="info-row"><span class="label">Ensoleillement :</span> <span id="sunlight"></span> %</div>
       <div class="info-row"><span class="label">Indice UV :</span> <span id="uv-index"></span></div>
       <div class="info-row">
         <span class="label">Phase lunaire :</span>
@@ -312,13 +311,6 @@
       document.getElementById('temp-min').textContent = data.main.temp_min.toFixed(1);
       document.getElementById('temp-max').textContent = data.main.temp_max.toFixed(1);
       document.getElementById('clouds').textContent = data.clouds.all; // en %
-
-      // Luminosité estimée corrigée par couverture nuageuse
-      const isDay = (Date.now() / 1000 > data.sys.sunrise) && (Date.now() / 1000 < data.sys.sunset);
-      const baseSun = isDay ? 100 : 0;
-      const clouds = data.clouds?.all || 0;
-      const sunAdj = Math.max(0, baseSun * (1 - clouds / 100));
-      document.getElementById("sunlight").textContent = Math.round(sunAdj);
 
       // Lune
       const moon = getMoonPhaseWithDescription(new Date());
