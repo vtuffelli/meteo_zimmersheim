@@ -164,32 +164,33 @@
 <body>
   <div id="background-anim"></div>
   <div id="container">
-    <div id="left-panel">
-      <h1>Météo actuelle - Zimmersheim</h1>
-      <img id="condition-icon" src="" alt="Icône météo" />
-      <div class="info-row"><span class="label">Condition :</span> <span id="description"></span></div>
-      <div class="info-row"><span class="label">Température :</span> <span id="temp"></span> °C</div>
-      <div class="info-row"><span class="label">Humidité :</span> <span id="humidity"></span> %</div>
-      <div class="info-row"><span class="label">Précipitations (1h) :</span> <span id="precip"></span></div>
-      <div class="info-row"><span class="label">Pression :</span> <span id="pressure"></span> hPa</div>
-      <div class="info-row">
-        <span class="label">Vent :</span>
-        <span id="wind"></span> km/h
-        <svg id="wind-arrow" viewBox="0 0 24 24" fill="none" stroke="#0077cc" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="12" y1="19" x2="12" y2="5"></line>
-          <polyline points="5 12 12 5 19 12"></polyline>
-        </svg>
-      </div>
-      <div class="info-row"><span class="label">Direction vent :</span> <span id="wind-dir"></span></div>
-      <div class="info-row"><span class="label">Lever du soleil :</span> <span id="sunrise"></span></div>
-      <div class="info-row"><span class="label">Coucher du soleil :</span> <span id="sunset"></span></div>
-      <div class="info-row"><span class="label">Ensoleillement :</span> <span id="sunlight"></span> %</div>
-      <div class="info-row"><span class="label">Indice UV :</span> <span id="uv-index"></span></div>
-      <div class="info-row"><span class="label">Phase lunaire :</span> <span id="moon-phase" id="moon-phase">🌕</div>
-      <div class="info-row" style="flex-direction: column; text-align: center; margin-top: 20px;">
-      <div id="moon-phase-desc" style="font-size: 1rem; color: #555;">Pleine lune</div>
-      </div>
-    </div>
+<div id="left-panel">
+  <h1>Météo actuelle - Zimmersheim</h1>
+  <img id="condition-icon" src="" alt="Icône météo" />
+  <div class="info-row"><span class="label">Condition :</span> <span id="description"></span></div>
+  <div class="info-row"><span class="label">Température :</span> <span id="temp"></span> °C</div>
+  <div class="info-row"><span class="label">Humidité :</span> <span id="humidity"></span> %</div>
+  <div class="info-row"><span class="label">Précipitations (1h) :</span> <span id="precip"></span></div>
+  <div class="info-row"><span class="label">Pression :</span> <span id="pressure"></span> hPa</div>
+  <div class="info-row">
+    <span class="label">Vent :</span>
+    <span id="wind"></span> km/h
+    <svg id="wind-arrow" viewBox="0 0 24 24" fill="none" stroke="#0077cc" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="12" y1="19" x2="12" y2="5"></line>
+      <polyline points="5 12 12 5 19 12"></polyline>
+    </svg>
+  </div>
+  <div class="info-row"><span class="label">Direction vent :</span> <span id="wind-dir"></span></div>
+  <div class="info-row"><span class="label">Lever du soleil :</span> <span id="sunrise"></span></div>
+  <div class="info-row"><span class="label">Coucher du soleil :</span> <span id="sunset"></span></div>
+  <div class="info-row"><span class="label">Ensoleillement :</span> <span id="sunlight"></span> %</div>
+  <div class="info-row"><span class="label">Indice UV :</span> <span id="uv-index"></span></div>
+  <div class="info-row">
+    <span class="label">Phase lunaire :</span>
+    <span id="moon-phase" style="margin-right: 8px;">🌕</span>
+    <span id="moon-phase-desc" style="font-size: 1rem; color: #555;">Pleine lune</span>
+  </div>
+</div>
     <div id="right-panel">
       <h2 style="text-align:center; padding: 10px 0;">Qualité de l'air - Zimmersheim</h2>
       <div id="air-quality-details"></div>
