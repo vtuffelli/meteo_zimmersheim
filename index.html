@@ -3,12 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Météo complète Zimmersheim - améliorée</title>
+  <title>Météo complète Zimmersheim - Open-Meteo</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
   <style>
-
-    /* ==== Chapitre 1 : Styles généraux et animation de fond ==== */
     body, html {
       margin: 0;
       padding: 0;
@@ -17,47 +15,6 @@
       color: #222;
       overflow-x: hidden;
     }
-
-    #background-anim {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      z-index: -1;
-      pointer-events: none;
-      overflow: hidden;
-    }
-
-    .cloud {
-      position: absolute;
-      background: linear-gradient(to bottom, #f0f4f8, #cbd6e8);
-      border-radius: 50px;
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
-      animation: cloudMove linear infinite;
-      opacity: 0.8;
-    }
-
-    .cloud::before, .cloud::after {
-      content: '';
-      position: absolute;
-      background: inherit;
-      border-radius: 50px;
-    }
-
-    .cloud::before {
-      width: 60px; height: 60px;
-      top: -30px; left: 10px;
-    }
-
-    .cloud::after {
-      width: 50px; height: 50px;
-      top: -20px; left: 45px;
-    }
-
-    @keyframes cloudMove {
-      0% { left: -150px; }
-      100% { left: 110vw; }
-    }
-
-    /* ==== Chapitre 2 : Mise en page et panneaux ==== */
     #container {
       display: flex;
       max-width: 1200px;
@@ -65,75 +22,27 @@
       gap: 20px;
       flex-wrap: wrap;
     }
-
-    #left-panel {
-      flex: 1 1 350px;
-      background: rgba(255,255,255,0.9);
-      border-radius: 15px;
-      padding: 20px;
-      box-shadow: 0 0 30px rgba(0,0,0,0.1);
-      user-select: none;
-      max-width: 400px;
-      font-family: Arial, sans-serif;
-    }
-
-    #right-panel {
-      flex: 1 1 600px;
-      border-radius: 15px;
-      overflow: hidden;
-      box-shadow: 0 0 30px rgba(0,0,0,0.1);
+    #left-panel, #right-panel {
+      flex: 1 1 400px;
       background: rgba(255,255,255,0.95);
+      border-radius: 15px;
       padding: 20px;
+      box-shadow: 0 0 30px rgba(0,0,0,0.1);
     }
-
-    /* ==== Chapitre 3 : Titres et texte ==== */
-    h1, h2 {
-      margin-bottom: 15px;
-      user-select: none;
-      text-align: center;
-    }
-
     .info-row {
       margin: 6px 0;
-      font-size: 1.1rem;
+      font-size: 1rem;
       display: flex;
-      align-items: center;
       justify-content: space-between;
     }
-
     .label {
-      font-weight: 700;
-      color: #555;
+      font-weight: bold;
       min-width: 130px;
     }
-
-    /* ==== Chapitre 4 : Icones et petites décorations ==== */
-    #condition-icon {
-      display: block;
-      margin: 10px auto;
-      width: 100px; height: 100px;
+    canvas {
+      width: 100% !important;
+      max-height: 400px !important;
     }
-
-    #wind-arrow {
-      display: inline-block;
-      width: 20px;
-      height: 20px;
-      margin-left: 8px;
-      vertical-align: middle;
-      transition: transform 0.3s ease;
-    }
-
-    #moon-phase {
-      margin-left: 8px;
-      font-size: 1.4rem;
-    }
-
-    #moon-phase-desc {
-      font-size: 1rem;
-      color: #555;
-    }
-
-    /* ==== Chapitre 5 : Sections graphiques ==== */
     section.chart-section {
       background: rgba(255,255,255,0.95);
       margin: 30px auto;
@@ -141,465 +50,206 @@
       border-radius: 15px;
       padding: 20px;
       box-shadow: 0 0 30px rgba(0,0,0,0.08);
-      user-select: none;
-    }
-
-    canvas {
-      width: 100% !important;
-      max-height: 400px !important;
     }
   </style>
 </head>
 <body>
-  <!-- ==== Chapitre 6 : Fond animé ==== -->
-  <div id="background-anim"></div>
-
-  <!-- ==== Chapitre 7 : Conteneur principal ==== -->
   <div id="container">
-
-    <!-- ==== Chapitre 8 : Panneau gauche - météo actuelle ==== -->
     <div id="left-panel">
-      <h1>Météo actuelle - Zimmersheim</h1>
-      <img id="condition-icon" src="" alt="Icône météo" />
-      <div class="info-row"><span class="label">Condition :</span> <span id="description"></span></div>
-      <div class="info-row"><span class="label">Température :</span> <span id="temp"></span> °C</div>
-      <div class="info-row"><span class="label">Température ressentie :</span> <span id="feels-like"></span> °C</div>
-      <div class="info-row"><span class="label">Température min :</span> <span id="temp-min"></span> °C</div>
-      <div class="info-row"><span class="label">Température max :</span> <span id="temp-max"></span> °C</div>
-      <div class="info-row"><span class="label">Humidité :</span> <span id="humidity"></span> %</div>
-      <div class="info-row"><span class="label">Couverture nuageuse :</span> <span id="clouds"></span> %</div>
-      <div class="info-row"><span class="label">Précipitations (1h) :</span> <span id="precip"></span></div>
-      <div class="info-row"><span class="label">Pression :</span> <span id="pressure"></span> hPa</div>
-      <div class="info-row">
-        <span class="label">Vent :</span>
-        <span id="wind"></span> km/h
-        <svg id="wind-arrow" viewBox="0 0 24 24" fill="none" stroke="#0077cc" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="12" y1="19" x2="12" y2="5"></line>
-          <polyline points="5 12 12 5 19 12"></polyline>
-        </svg>
-      </div>
-      <div class="info-row"><span class="label">Direction vent :</span> <span id="wind-dir"></span></div>
-      <div class="info-row"><span class="label">Lever du soleil :</span> <span id="sunrise"></span></div>
-      <div class="info-row"><span class="label">Coucher du soleil :</span> <span id="sunset"></span></div>
-      <div class="info-row"><span class="label">Ensoleillement :</span> <span id="sunlight"></span> %</div>
-      <div class="info-row"><span class="label">Indice UV :</span> <span id="uv-index"></span></div>
-      <div class="info-row">
-        <span class="label">Phase lunaire :</span>
-        <span id="moon-phase-desc">Pleine lune</span>
-        <span id="moon-phase">🌕</span>
-      </div>
+      <h2>Météo actuelle - Zimmersheim</h2>
+      <div class="info-row"><span class="label">Température :</span><span id="temp"></span> °C</div>
+      <div class="info-row"><span class="label">Température ressentie :</span><span id="feelslike"></span> °C</div>
+      <div class="info-row"><span class="label">Vent :</span><span id="wind"></span> km/h</div>
+      <div class="info-row"><span class="label">Orientation :</span><span id="winddir"></span></div>
+      <div class="info-row"><span class="label">Humidité :</span><span id="humidity"></span> %</div>
+      <div class="info-row"><span class="label">Couverture nuageuse :</span><span id="clouds"></span> %</div>
+      <div class="info-row"><span class="label">Pression :</span><span id="pressure"></span> hPa</div>
+      <div class="info-row"><span class="label">UV :</span><span id="uv"></span></div>
+      <div class="info-row"><span class="label">Phase lunaire :</span><span id="moon"></span></div>
     </div>
-
-    <!-- ==== Chapitre 9 : Panneau droit - qualité de l'air ==== -->
     <div id="right-panel">
-      <h2 style="text-align:center; padding: 10px 0;">Qualité de l'air - Zimmersheim</h2>
-      <div id="air-quality-details"></div>
+      <h2>Qualité de l'air - Zimmersheim</h2>
+      <div id="air-quality"></div>
     </div>
   </div>
 
-  <!-- ==== Chapitre 10 : Sections graphiques ==== -->
   <section class="chart-section">
-    <h2>📊 Graphique principal</h2>
+    <h2>Graphique Météo</h2>
     <canvas id="mainChart"></canvas>
   </section>
-
   <section class="chart-section">
-    <h2>📊 Graphique secondaire (vent + UV + nuages)</h2>
+    <h2>Vent, UV et Nuages</h2>
     <canvas id="windChart"></canvas>
   </section>
-
   <section class="chart-section">
-    <h2>📊 Graphique qualité de l'air</h2>
+    <h2>Qualité de l'air</h2>
     <canvas id="airChart"></canvas>
   </section>
 
-  <!-- ==== Chapitre 11 : Scripts ==== -->
   <script>
-    const apiKey = "f59e1314a26b162f41dabbc7bb2b7719";
-    const city = "Zimmersheim,fr";
-    const units = "metric";
-    const lang = "fr";
+    const lat = 47.744;
+    const lon = 7.397;
+    const windDirs = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSO", "SO", "OSO", "O", "ONO", "NO", "NNO"];
 
-    /* ==== Chapitre 11.1 : Fonctions utilitaires ==== */
     function degToCardinal(deg) {
-      const dirs = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
-                    "S", "SSO", "SO", "OSO", "O", "ONO", "NO", "NNO"];
-      return dirs[Math.round(deg / 22.5) % 16];
+      return windDirs[Math.round(deg / 22.5) % 16];
     }
 
-    function formatTime(ts) {
-      return new Date(ts * 1000).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    }
-
-    function getMoonPhaseWithDescription(date) {
-      const lp = 2551443;
-      const new_moon = new Date(1970,0,7,20,35,0);
-      const phase = ((date.getTime() - new_moon.getTime())/1000) % lp;
-      const percent = (phase / lp);
-      const index = Math.floor(percent * 8);
-      const phases = [
-        { icon: '🌑', label: 'Nouvelle lune' },
-        { icon: '🌒', label: 'Premier croissant' },
-        { icon: '🌓', label: 'Premier quartier' },
-        { icon: '🌔', label: 'Lune gibbeuse croissante' },
-        { icon: '🌕', label: 'Pleine lune' },
-        { icon: '🌖', label: 'Lune gibbeuse décroissante' },
-        { icon: '🌗', label: 'Dernier quartier' },
-        { icon: '🌘', label: 'Dernier croissant' }
-      ];
-      return phases[index];
-    }
-
-    /* ==== Chapitre 11.2 : Fetch météo actuelle ==== */
-    async function fetchWeather() {
-      const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=${units}&lang=${lang}`);
+    async function fetchOpenMeteo() {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,apparent_temperature,cloudcover,relative_humidity_2m,pressure_msl,uv_index,wind_speed_10m,wind_direction_10m,pm10,pm2_5,carbon_monoxide,nitrogen_dioxide,ozone,sulphur_dioxide&daily=uv_index_max,precipitation_sum,wind_speed_10m_max,sunrise,sunset,moon_phase&current=temperature_2m,apparent_temperature,cloudcover,pressure_msl,relative_humidity_2m,wind_speed_10m,wind_direction_10m,uv_index,is_day&timezone=auto`;
+      const res = await fetch(url);
       const data = await res.json();
 
-      document.getElementById("description").textContent = data.weather[0].description;
-      document.getElementById("temp").textContent = Math.round(data.main.temp);
-      document.getElementById("humidity").textContent = data.main.humidity;
-      document.getElementById("pressure").textContent = data.main.pressure;
-      document.getElementById("precip").textContent =
-        data.rain?.["1h"] || data.snow?.["1h"] ? ((data.rain?.["1h"] || 0) + (data.snow?.["1h"] || 0)).toFixed(1) + " mm" : "Aucune";
-      document.getElementById("wind").textContent = Math.round(data.wind.speed * 3.6);
-      document.getElementById("wind-dir").textContent = `${degToCardinal(data.wind.deg)} (${data.wind.deg}°)`;
-      document.getElementById("sunrise").textContent = formatTime(data.sys.sunrise);
-      document.getElementById("sunset").textContent = formatTime(data.sys.sunset);
-      document.getElementById("condition-icon").src = `https://openweathermap.org/img/wn/${data.weather[0].icon}@4x.png`;
-      document.getElementById('feels-like').textContent = data.main.feels_like.toFixed(1);
-      document.getElementById('temp-min').textContent = data.main.temp_min.toFixed(1);
-      document.getElementById('temp-max').textContent = data.main.temp_max.toFixed(1);
-      document.getElementById('clouds').textContent = data.clouds.all; // en %
+      const c = data.current;
+      document.getElementById("temp").textContent = c.temperature_2m.toFixed(1);
+      document.getElementById("feelslike").textContent = c.apparent_temperature.toFixed(1);
+      document.getElementById("wind").textContent = c.wind_speed_10m.toFixed(1);
+      document.getElementById("winddir").textContent = `${degToCardinal(c.wind_direction_10m)} (${c.wind_direction_10m}°)`;
+      document.getElementById("humidity").textContent = c.relative_humidity_2m;
+      document.getElementById("clouds").textContent = c.cloudcover;
+      document.getElementById("pressure").textContent = c.pressure_msl;
+      document.getElementById("uv").textContent = c.uv_index.toFixed(1);
 
-      // Luminosité estimée corrigée par couverture nuageuse
-      const isDay = (Date.now() / 1000 > data.sys.sunrise) && (Date.now() / 1000 < data.sys.sunset);
-      const baseSun = isDay ? 100 : 0;
-      const clouds = data.clouds?.all || 0;
-      const sunAdj = Math.max(0, baseSun * (1 - clouds / 100));
-      document.getElementById("sunlight").textContent = Math.round(sunAdj);
+      const moonIcons = ['🌑','🌒','🌓','🌔','🌕','🌖','🌗','🌘'];
+      const phase = Math.round(data.daily.moon_phase[0] * 7);
+      document.getElementById("moon").textContent = moonIcons[phase];
 
-      // Lune
-      const moon = getMoonPhaseWithDescription(new Date());
-      document.getElementById("moon-phase").textContent = moon.icon;
-      document.getElementById("moon-phase-desc").textContent = moon.label;
-    }
+      const hours = data.hourly.time.map(t => new Date(t).toLocaleString('fr-FR', { hour: '2-digit', day: '2-digit', month: '2-digit' }));
 
-    /* ==== Chapitre 11.3 : Fetch indice UV ==== */
-    let uvValueGlobal = 0;  // variable globale pour chart
-    async function fetchUV() {
-      const res = await fetch(`https://api.openweathermap.org/data/2.5/uvi?lat=47.7746&lon=7.3373&appid=${apiKey}`);
-      const data = await res.json();
-      uvValueGlobal = data.value;
-      document.getElementById("uv-index").textContent = uvValueGlobal;
-    }
-
-    /* ==== Chapitre 11.4 : Fetch qualité de l'air ==== */
-    async function fetchAir() {
-      const res = await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=47.7746&lon=7.3373&appid=${apiKey}`);
-      const data = await res.json();
-      const a = data.list[0].components;
-
-      const desc = {
-        co: 'CO (monoxyde de carbone)',
-        no: 'NO (monoxyde d\'azote)',
-        no2: 'NO₂ (dioxyde d\'azote)',
-        o3: 'O₃ (ozone)',
-        so2: 'SO₂ (dioxyde de soufre)',
-        pm2_5: 'PM2.5 (particules fines)',
-        pm10: 'PM10 (grosses particules)',
-        nh3: 'NH₃ (ammoniac)'
-      };
-
-      const html = Object.entries(a).map(([key, val]) =>
-        `<div><b>${desc[key] || key}</b> : ${val} µg/m³${interpretAirQuality(key, val)}</div>`
-      ).join("");
-      document.getElementById("air-quality-details").innerHTML = html;
-    }
-
-    function interpretAirQuality(key, val) {
-      const ranges = {
-        pm2_5: [10, 20, 25, 50], pm10: [20, 40, 50, 100],
-        o3: [50, 100, 130, 240], no2: [40, 90, 120, 230],
-        so2: [50, 100, 150, 500], co: [1000, 2000, 5000, 10000]
-      };
-
-      const labels = [' (Bonne)', ' (Acceptable)', ' (Médiocre)', ' (Mauvaise)', ' (Dangereuse)'];
-      const thresholds = ranges[key];
-      if (!thresholds) return '';
-      const i = thresholds.findIndex(t => val < t);
-      return labels[i >= 0 ? i : labels.length - 1];
-    }
-
-/* ==== Chapitre 11.5 : Fetch prévisions météo ==== */
-function degToDirectionIndex(deg) {
-  return Math.round(deg / 22.5) % 16;
-}
-const windDirs = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSO", "SO", "OSO", "O", "ONO", "NO", "NNO"];
-
-async function fetchForecast() {
-  const res = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=${units}&lang=${lang}`);
-  const data = await res.json();
-
-  const labels = data.list.map(item => {
-    const dt = new Date(item.dt * 1000);
-    return dt.toLocaleString('fr-FR', { hour: '2-digit', day: '2-digit', month: '2-digit' });
-  });
-
-  const temps = data.list.map(item => item.main.temp);
-  const humidity = data.list.map(item => item.main.humidity);
-  const pressure = data.list.map(item => item.main.pressure);
-  const precipitation = data.list.map(item => (item.rain?.["3h"] || 0) + (item.snow?.["3h"] || 0));
-
-  const windSpeed = data.list.map(item => item.wind.speed * 3.6);
-  const windDeg = data.list.map(item => item.wind.deg);
-  const windDirIndex = windDeg.map(deg => degToDirectionIndex(deg));
-  const clouds = data.list.map(item => item.clouds.all);
-  const uvIndexForecast = new Array(data.list.length).fill(uvValueGlobal);
-
-  // === Graphique principal ===
-  const ctxMain = document.getElementById('mainChart').getContext('2d');
-  if(window.mainChartInstance) window.mainChartInstance.destroy();
-  window.mainChartInstance = new Chart(ctxMain, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [
-        {
-          label: 'Température (°C)',
-          data: temps,
-          borderColor: 'rgba(255, 99, 132, 0.8)',
-          fill: false,
-          yAxisID: 'y',
-          tension: 0.3,
+      const chart1 = new Chart(document.getElementById("mainChart"), {
+        type: 'line',
+        data: {
+          labels: hours,
+          datasets: [
+            {
+              label: 'Température (°C)',
+              data: data.hourly.temperature_2m,
+              borderColor: 'red',
+              fill: false,
+              tension: 0.3,
+            },
+            {
+              label: 'Ressentie (°C)',
+              data: data.hourly.apparent_temperature,
+              borderColor: 'orange',
+              fill: false,
+              tension: 0.3,
+            },
+            {
+              label: 'Humidité (%)',
+              data: data.hourly.relative_humidity_2m,
+              borderColor: 'blue',
+              fill: false,
+              tension: 0.3,
+              yAxisID: 'y1'
+            }
+          ]
         },
-        {
-          label: 'Humidité (%)',
-          data: humidity,
-          borderColor: 'rgba(54, 162, 235, 0.8)',
-          fill: false,
-          yAxisID: 'y1',
-          tension: 0.3,
-        },
-        {
-          label: 'Précipitations (mm)',
-          data: precipitation,
-          type: 'bar',
-          backgroundColor: 'rgba(75, 192, 192, 0.7)',
-          yAxisID: 'y2',
-        },
-        {
-          label: 'Pression (hPa)',
-          data: pressure,
-          borderColor: 'rgba(255, 206, 86, 0.8)',
-          fill: false,
-          yAxisID: 'y3',
-          tension: 0.3,
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      interaction: { mode: 'index', intersect: false },
-      stacked: false,
-      scales: {
-        y: {
-          type: 'linear',
-          position: 'left',
-          title: { display: true, text: 'Température (°C)' },
-        },
-        y1: {
-          type: 'linear',
-          position: 'right',
-          grid: { drawOnChartArea: false },
-          title: { display: true, text: 'Humidité (%)' },
-          min: 0, max: 100,
-        },
-        y2: {
-          type: 'linear',
-          position: 'right',
-          grid: { drawOnChartArea: false },
-          title: { display: true, text: 'Précipitations (mm)' },
-          min: 0,
-        },
-        y3: {
-          type: 'linear',
-          position: 'left',
-          grid: { drawOnChartArea: false },
-          title: { display: true, text: 'Pression (hPa)' },
-          min: 900, max: 1100,
-          offset: true,
-        }
-      },
-      plugins: {
-        legend: { position: 'top' },
-        tooltip: { mode: 'index', intersect: false }
-      }
-    }
-  });
-
-  // === Graphique secondaire (vent, orientation, couverture nuageuse) ===
-  const ctxWind = document.getElementById('windChart').getContext('2d');
-  if(window.windChartInstance) window.windChartInstance.destroy();
-  window.windChartInstance = new Chart(ctxWind, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [
-        {
-          label: 'Vent (km/h)',
-          data: windSpeed,
-          borderColor: 'rgba(0, 123, 255, 0.8)',
-          fill: false,
-          yAxisID: 'y',
-          tension: 0.3,
-        },
-        {
-          label: 'Couverture nuageuse (%)',
-          data: clouds,
-          borderColor: 'rgba(128, 128, 128, 0.8)',
-          fill: false,
-          yAxisID: 'y2',
-          tension: 0.3,
-        },
-        {
-          label: 'Orientation vent',
-          data: windDirIndex,
-          borderColor: 'rgba(255, 99, 71, 0.9)',
-          borderDash: [5, 5],
-          fill: false,
-          yAxisID: 'y3',
-          tension: 0.3,
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      interaction: { mode: 'index', intersect: false },
-      stacked: false,
-      scales: {
-        y: {
-          position: 'left',
-          title: { display: true, text: 'Vent (km/h)' },
-          min: 0,
-        },
-        y2: {
-          position: 'right',
-          title: { display: true, text: 'Nuages (%)' },
-          min: 0, max: 100,
-          grid: { drawOnChartArea: false },
-        },
-        y3: {
-          position: 'right',
-          title: { display: true, text: 'Orientation vent' },
-          min: 0,
-          max: 15,
-          grid: { drawOnChartArea: false },
-          ticks: {
-            stepSize: 1,
-            callback: (value) => windDirs[value] || '',
+        options: {
+          responsive: true,
+          scales: {
+            y: { beginAtZero: true, title: { display: true, text: 'Température (°C)' } },
+            y1: {
+              position: 'right',
+              beginAtZero: true,
+              title: { display: true, text: 'Humidité (%)' },
+              grid: { drawOnChartArea: false }
+            }
           }
         }
-      },
-      plugins: {
-        legend: { position: 'top' },
-        tooltip: { mode: 'index', intersect: false }
-      }
-    }
-  });
+      });
 
-  // === Graphique qualité de l’air ===
-  const ctxAir = document.getElementById('airChart').getContext('2d');
-  if(window.airChartInstance) window.airChartInstance.destroy();
-
-  const airComponents = Object.keys(window.airQualityData || {});
-  const airValues = Object.values(window.airQualityData || {}).map(v => parseFloat(v.toFixed(2)));
-
-  const ranges = {
-    pm2_5: [10, 20, 25, 50], pm10: [20, 40, 50, 100],
-    o3: [50, 100, 130, 240], no2: [40, 90, 120, 230],
-    so2: [50, 100, 150, 500], co: [1000, 2000, 5000, 10000]
-  };
-  const palette = ['#4caf50', '#cddc39', '#ffc107', '#ff5722', '#b71c1c'];
-
-  const colors = airComponents.map((key, i) => {
-    const val = airValues[i];
-    const thresholds = ranges[key] || [];
-    const index = thresholds.findIndex(t => val < t);
-    return palette[index >= 0 ? index : palette.length - 1];
-  });
-
-  window.airChartInstance = new Chart(ctxAir, {
-    type: 'bar',
-    data: {
-      labels: airComponents,
-      datasets: [{
-        label: 'Concentration (µg/m³)',
-        data: airValues,
-        backgroundColor: colors,
-        yAxisID: 'y',
-      }]
-    },
-    options: {
-      responsive: true,
-      scales: {
-        y: {
-          beginAtZero: true,
-          title: { display: true, text: 'Concentration (µg/m³)' }
+      const chart2 = new Chart(document.getElementById("windChart"), {
+        type: 'line',
+        data: {
+          labels: hours,
+          datasets: [
+            {
+              label: 'Vent (km/h)',
+              data: data.hourly.wind_speed_10m,
+              borderColor: 'green',
+              fill: false,
+              tension: 0.3,
+              yAxisID: 'y'
+            },
+            {
+              label: 'Nuages (%)',
+              data: data.hourly.cloudcover,
+              borderColor: 'gray',
+              fill: false,
+              tension: 0.3,
+              yAxisID: 'y1'
+            },
+            {
+              label: 'Direction vent',
+              data: data.hourly.wind_direction_10m.map(d => Math.round(d / 22.5) % 16),
+              borderColor: 'black',
+              borderDash: [5, 5],
+              fill: false,
+              tension: 0.3,
+              yAxisID: 'y2'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: { title: { display: true, text: 'Vent (km/h)' } },
+            y1: {
+              position: 'right',
+              title: { display: true, text: 'Nuages (%)' },
+              grid: { drawOnChartArea: false }
+            },
+            y2: {
+              position: 'right',
+              title: { display: true, text: 'Orientation' },
+              ticks: {
+                stepSize: 1,
+                callback: (v) => windDirs[v] || ''
+              },
+              grid: { drawOnChartArea: false }
+            }
+          }
         }
-      },
-      plugins: {
-        legend: { display: false },
-        tooltip: { enabled: true },
-        datalabels: {
-          color: '#000',
-          anchor: 'end',
-          align: 'top',
-          formatter: value => value.toFixed(2),
-          font: { weight: 'bold' }
-        }
-      }
-    },
-    plugins: [ChartDataLabels]
-  });
-}
+      });
 
-    /* ==== Chapitre 11.6 : Initialisation ==== */
-    async function init() {
-      await fetchWeather();
-      await fetchUV();
-      await fetchAir();
-      await fetchForecast();
+      const airLabels = ['PM10','PM2.5','CO','NO2','O3','SO2'];
+      const airValues = [data.hourly.pm10[0], data.hourly.pm2_5[0], data.hourly.carbon_monoxide[0], data.hourly.nitrogen_dioxide[0], data.hourly.ozone[0], data.hourly.sulphur_dioxide[0]];
+      const colors = airValues.map(v => v < 20 ? '#4caf50' : v < 50 ? '#ffeb3b' : v < 100 ? '#ff9800' : '#f44336');
+      const airHTML = airLabels.map((lbl, i) => `<div><b>${lbl}</b> : ${airValues[i].toFixed(2)} µg/m³</div>`).join('');
+      document.getElementById("air-quality").innerHTML = airHTML;
+
+      new Chart(document.getElementById("airChart"), {
+        type: 'bar',
+        data: {
+          labels: airLabels,
+          datasets: [{
+            label: 'Qualité de l'air (µg/m³)',
+            data: airValues,
+            backgroundColor: colors
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            datalabels: {
+              anchor: 'end',
+              align: 'top',
+              formatter: val => val.toFixed(2),
+              font: { weight: 'bold' }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: 'Concentration (µg/m³)' }
+            }
+          }
+        },
+        plugins: [ChartDataLabels]
+      });
     }
-
-    // Stocker la dernière qualité de l'air pour le graphique
-    window.airQualityData = {};
-
-    // Modifier fetchAir pour aussi stocker données dans airQualityData
-    async function fetchAir() {
-      const res = await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=47.7746&lon=7.3373&appid=${apiKey}`);
-      const data = await res.json();
-      const a = data.list[0].components;
-      window.airQualityData = a;
-
-      const desc = {
-        co: 'CO (monoxyde de carbone)',
-        no: 'NO (monoxyde d\'azote)',
-        no2: 'NO₂ (dioxyde d\'azote)',
-        o3: 'O₃ (ozone)',
-        so2: 'SO₂ (dioxyde de soufre)',
-        pm2_5: 'PM2.5 (particules fines)',
-        pm10: 'PM10 (grosses particules)',
-        nh3: 'NH₃ (ammoniac)'
-      };
-
-      const html = Object.entries(a).map(([key, val]) =>
-        `<div><b>${desc[key] || key}</b> : ${val} µg/m³${interpretAirQuality(key, val)}</div>`
-      ).join("");
-      document.getElementById("air-quality-details").innerHTML = html;
-    }
-
-    /* ==== Chapitre 11.7 : Lancement ==== */
-    init();
+    fetchOpenMeteo();
   </script>
 </body>
 </html>
