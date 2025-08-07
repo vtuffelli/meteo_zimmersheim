@@ -536,20 +536,14 @@ const datasets = palette.map((color, idx) => {
     const val = airValues[i];
     const thresholds = ranges[key] || [];
     const index = thresholds.findIndex(t => val < t);
-    return (index === idx) ? val : 0;
+    return (index === idx) ? val : NaN;  // <-- important: NaN pour ne pas tracer
   });
 
-  const backgroundColors = airComponents.map((key, i) => {
-    const val = airValues[i];
-    const thresholds = ranges[key] || [];
-    const index = thresholds.findIndex(t => val < t);
-    return (index === idx) ? color : 'rgba(0,0,0,0)';
-  });
-
+  // Couleur constante par dataset, pas besoin de varier par barre
   return {
     label: labelsLegend[idx],
     data: dataForDataset,
-    backgroundColor: backgroundColors,
+    backgroundColor: color,
     yAxisID: 'y',
   };
 });
@@ -570,12 +564,20 @@ window.airChartInstance = new Chart(ctxAir, {
     },
     plugins: {
       legend: { display: true, position: 'top' },
-      tooltip: { enabled: true },
+      tooltip: {
+        enabled: true,
+        callbacks: {
+          label: ctx => {
+            const val = ctx.parsed.y;
+            return val ? `${ctx.dataset.label} : ${val.toFixed(2)} µg/m³` : null;
+          }
+        }
+      },
       datalabels: {
         color: '#000',
         anchor: 'end',
         align: 'top',
-        formatter: value => value > 0 ? value.toFixed(2) : '',
+        formatter: value => value ? value.toFixed(2) : '',
         font: { weight: 'bold' }
       }
     }
