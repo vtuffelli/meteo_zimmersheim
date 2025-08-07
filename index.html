@@ -181,7 +181,6 @@
       <div class="info-row"><span class="label">Direction vent :</span> <span id="wind-dir"></span></div>
       <div class="info-row"><span class="label">Lever du soleil :</span> <span id="sunrise"></span></div>
       <div class="info-row"><span class="label">Coucher du soleil :</span> <span id="sunset"></span></div>
-      <div class="info-row"><span class="label">Ensoleillement :</span> <span id="sunlight"></span> %</div>
       <div class="info-row"><span class="label">Indice UV :</span> <span id="uv-index"></span></div>
       <div class="info-row">
         <span class="label">Phase lunaire :</span>
@@ -336,41 +335,53 @@
     }
 
     /* ==== Chapitre 11.4 : Fetch qualité de l'air ==== */
-    async function fetchAir() {
-      const res = await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=47.7746&lon=7.3373&appid=${apiKey}`);
-      const data = await res.json();
-      const a = data.list[0].components;
+async function fetchAir() {
+  const res = await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=47.7746&lon=7.3373&appid=${apiKey}`);
+  const data = await res.json();
+  const a = data.list[0].components;
 
-      const desc = {
-        co: 'CO (monoxyde de carbone)',
-        no: 'NO (monoxyde d\'azote)',
-        no2: 'NO₂ (dioxyde d\'azote)',
-        o3: 'O₃ (ozone)',
-        so2: 'SO₂ (dioxyde de soufre)',
-        pm2_5: 'PM2.5 (particules fines)',
-        pm10: 'PM10 (grosses particules)',
-        nh3: 'NH₃ (ammoniac)'
-      };
+  const desc = {
+    co: 'CO (monoxyde de carbone)',
+    no: 'NO (monoxyde d\'azote)',
+    no2: 'NO₂ (dioxyde d\'azote)',
+    o3: 'O₃ (ozone)',
+    so2: 'SO₂ (dioxyde de soufre)',
+    pm2_5: 'PM2.5 (particules fines)',
+    pm10: 'PM10 (grosses particules)',
+    nh3: 'NH₃ (ammoniac)'
+  };
 
-      const html = Object.entries(a).map(([key, val]) =>
-        `<div><b>${desc[key] || key}</b> : ${val} µg/m³${interpretAirQuality(key, val)}</div>`
-      ).join("");
-      document.getElementById("air-quality-details").innerHTML = html;
-    }
+  const html = Object.entries(a).map(([key, val]) =>
+    `<div><b>${desc[key] || key}</b> : ${val} µg/m³${interpretAirQuality(key, val)}</div>`
+  ).join("");
 
-    function interpretAirQuality(key, val) {
-      const ranges = {
-        pm2_5: [10, 20, 25, 50], pm10: [20, 40, 50, 100],
-        o3: [50, 100, 130, 240], no2: [40, 90, 120, 230],
-        so2: [50, 100, 150, 500], co: [1000, 2000, 5000, 10000]
-      };
+  document.getElementById("air-quality-details").innerHTML = html;
+}
 
-      const labels = [' (Bonne)', ' (Acceptable)', ' (Médiocre)', ' (Mauvaise)', ' (Dangereuse)'];
-      const thresholds = ranges[key];
-      if (!thresholds) return '';
-      const i = thresholds.findIndex(t => val < t);
-      return labels[i >= 0 ? i : labels.length - 1];
-    }
+function interpretAirQuality(key, val) {
+  const ranges = {
+    pm2_5: [10, 20, 25, 50],
+    pm10: [20, 40, 50, 100],
+    o3: [50, 100, 130, 240],
+    no2: [40, 90, 120, 230],
+    so2: [50, 100, 150, 500],
+    co: [1000, 2000, 5000, 10000],
+    nh3: [200, 400, 600, 1000] // ✅ Seuils NH3 ajoutés
+  };
+
+  const labels = [
+    ' (Bonne)',
+    ' (Acceptable)',
+    ' (Médiocre)',
+    ' (Mauvaise)',
+    ' (Dangereuse)'
+  ];
+
+  const thresholds = ranges[key];
+  if (!thresholds) return '';
+  const i = thresholds.findIndex(t => val < t);
+  return labels[i >= 0 ? i : labels.length - 1];
+}
 
 /* ==== Chapitre 11.5 : Fetch prévisions météo ==== */
 function degToDirectionIndex(deg) {
@@ -550,60 +561,79 @@ async function fetchForecast() {
   });
 
   // === Graphique qualité de l’air ===
-  const ctxAir = document.getElementById('airChart').getContext('2d');
-  if(window.airChartInstance) window.airChartInstance.destroy();
+const ctxAir = document.getElementById('airChart').getContext('2d');
+if (window.airChartInstance) window.airChartInstance.destroy();
 
-  const airComponents = Object.keys(window.airQualityData || {});
-  const airValues = Object.values(window.airQualityData || {}).map(v => parseFloat(v.toFixed(2)));
+const airComponents = Object.keys(window.airQualityData || {});
+const airValues = Object.values(window.airQualityData || {}).map(v => parseFloat(v.toFixed(2)));
 
-  const ranges = {
-    pm2_5: [10, 20, 25, 50], pm10: [20, 40, 50, 100],
-    o3: [50, 100, 130, 240], no2: [40, 90, 120, 230],
-    so2: [50, 100, 150, 500], co: [1000, 2000, 5000, 10000]
-  };
-  const palette = ['#4caf50', '#cddc39', '#ffc107', '#ff5722', '#b71c1c'];
+// ✅ Ajout des seuils pour NH₃
+const ranges = {
+  pm2_5: [10, 20, 25, 50],
+  pm10: [20, 40, 50, 100],
+  o3: [50, 100, 130, 240],
+  no2: [40, 90, 120, 230],
+  so2: [50, 100, 150, 500],
+  co: [1000, 2000, 5000, 10000],
+  nh3: [200, 400, 600, 1000]
+};
 
-  const colors = airComponents.map((key, i) => {
+const palette = ['#4caf50', '#cddc39', '#ffc107', '#ff5722', '#b71c1c'];
+
+const labelsLegend = ['Bon', 'Moyen', 'Modéré', 'Mauvais', 'Très mauvais'];
+
+const datasets = palette.map((color, idx) => {
+  const dataForDataset = airComponents.map((key, i) => {
     const val = airValues[i];
     const thresholds = ranges[key] || [];
     const index = thresholds.findIndex(t => val < t);
-    return palette[index >= 0 ? index : palette.length - 1];
+    return (index === idx) ? val : NaN; // NaN : ne trace pas la barre
   });
 
-  window.airChartInstance = new Chart(ctxAir, {
-    type: 'bar',
-    data: {
-      labels: airComponents,
-      datasets: [{
-        label: 'Concentration (µg/m³)',
-        data: airValues,
-        backgroundColor: colors,
-        yAxisID: 'y',
-      }]
-    },
-    options: {
-      responsive: true,
-      scales: {
-        y: {
-          beginAtZero: true,
-          title: { display: true, text: 'Concentration (µg/m³)' }
-        }
-      },
-      plugins: {
-        legend: { display: false },
-        tooltip: { enabled: true },
-        datalabels: {
-          color: '#000',
-          anchor: 'end',
-          align: 'top',
-          formatter: value => value.toFixed(2),
-          font: { weight: 'bold' }
-        }
+  return {
+    label: labelsLegend[idx],
+    data: dataForDataset,
+    backgroundColor: color,
+    yAxisID: 'y',
+  };
+});
+
+window.airChartInstance = new Chart(ctxAir, {
+  type: 'bar',
+  data: {
+    labels: airComponents,
+    datasets: datasets,
+  },
+  options: {
+    responsive: true,
+    scales: {
+      y: {
+        beginAtZero: true,
+        title: { display: true, text: 'Concentration (µg/m³)' }
       }
     },
-    plugins: [ChartDataLabels]
-  });
-}
+    plugins: {
+      legend: { display: true, position: 'top' },
+      tooltip: {
+        enabled: true,
+        callbacks: {
+          label: ctx => {
+            const val = ctx.parsed.y;
+            return val ? `${ctx.dataset.label} : ${val.toFixed(2)} µg/m³` : null;
+          }
+        }
+      },
+      datalabels: {
+        color: '#000',
+        anchor: 'end',
+        align: 'top',
+        formatter: value => value ? value.toFixed(2) : '',
+        font: { weight: 'bold' }
+      }
+    }
+  },
+  plugins: [ChartDataLabels]
+});
 
     /* ==== Chapitre 11.6 : Initialisation ==== */
     async function init() {
