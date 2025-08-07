@@ -495,74 +495,98 @@ async function fetchForecast() {
   });
 
   // === Graphique secondaire (vent, orientation, couverture nuageuse) ===
-  const ctxWind = document.getElementById('windChart').getContext('2d');
-  if(window.windChartInstance) window.windChartInstance.destroy();
-  window.windChartInstance = new Chart(ctxWind, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [
-        {
-          label: 'Vent (km/h)',
-          data: windSpeed,
-          borderColor: 'rgba(0, 123, 255, 0.8)',
-          fill: false,
-          yAxisID: 'y',
-          tension: 0.3,
-        },
-        {
-          label: 'Couverture nuageuse (%)',
-          data: clouds,
-          borderColor: 'rgba(128, 128, 128, 0.8)',
-          fill: false,
-          yAxisID: 'y2',
-          tension: 0.3,
-        },
-        {
-          label: 'Orientation vent',
-          data: windDirIndex,
-          borderColor: 'rgba(255, 99, 71, 0.9)',
-          borderDash: [5, 5],
-          fill: false,
-          yAxisID: 'y3',
-          tension: 0.3,
+const ctxWind = document.getElementById('windChart').getContext('2d');
+if (window.windChartInstance) window.windChartInstance.destroy();
+
+const windDirs = [
+  "N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
+  "S", "SSO", "SO", "OSO", "O", "ONO", "NO", "NNO"
+];
+
+window.windChartInstance = new Chart(ctxWind, {
+  type: 'line',
+  data: {
+    labels,
+    datasets: [
+      {
+        label: 'Vent (km/h)',
+        data: windSpeed,
+        borderColor: 'rgba(0, 123, 255, 0.8)',
+        backgroundColor: 'rgba(0, 123, 255, 0.2)',
+        fill: true,
+        yAxisID: 'y',
+        tension: 0.3,
+        pointRadius: 2,
+      },
+      {
+        label: 'Couverture nuageuse (%)',
+        data: clouds,
+        borderColor: 'rgba(128, 128, 128, 0.8)',
+        backgroundColor: 'rgba(128, 128, 128, 0.2)',
+        fill: true,
+        yAxisID: 'y2',
+        tension: 0.3,
+        pointRadius: 2,
+      },
+      {
+        label: 'Orientation vent',
+        data: windDirIndex,
+        borderColor: 'rgba(255, 99, 71, 0.9)',
+        borderDash: [5, 5],
+        fill: false,
+        yAxisID: 'y3',
+        tension: 0.3,
+        pointRadius: 3,
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    interaction: { mode: 'index', intersect: false },
+    stacked: false,
+    scales: {
+      y: {
+        position: 'left',
+        title: { display: true, text: 'Vent (km/h)' },
+        min: 0,
+      },
+      y2: {
+        position: 'right',
+        title: { display: true, text: 'Nuages (%)' },
+        min: 0,
+        max: 100,
+        grid: { drawOnChartArea: false },
+      },
+      y3: {
+        position: 'right',
+        title: { display: true, text: 'Orientation vent' },
+        min: 0,
+        max: 15,
+        grid: { drawOnChartArea: false },
+        ticks: {
+          stepSize: 1,
+          callback: (value) => windDirs[value] || ''
         }
-      ]
+      }
     },
-    options: {
-      responsive: true,
-      interaction: { mode: 'index', intersect: false },
-      stacked: false,
-      scales: {
-        y: {
-          position: 'left',
-          title: { display: true, text: 'Vent (km/h)' },
-          min: 0,
-        },
-        y2: {
-          position: 'right',
-          title: { display: true, text: 'Nuages (%)' },
-          min: 0, max: 100,
-          grid: { drawOnChartArea: false },
-        },
-        y3: {
-          position: 'right',
-          title: { display: true, text: 'Orientation vent' },
-          min: 0,
-          max: 15,
-          grid: { drawOnChartArea: false },
-          ticks: {
-            stepSize: 1,
-            callback: (value) => windDirs[value] || '',
+    plugins: {
+      legend: { position: 'top' },
+      tooltip: {
+        mode: 'index',
+        intersect: false,
+        callbacks: {
+          label: function(context) {
+            if (context.dataset.label === 'Orientation vent') {
+              const index = context.parsed.y;
+              return `Orientation vent : ${windDirs[index] || 'Inconnu'}`;
+            }
+            return `${context.dataset.label} : ${context.formattedValue}`;
           }
         }
-      },
-      plugins: {
-        legend: { position: 'top' },
-        tooltip: { mode: 'index', intersect: false }
       }
     }
-  });
+  }
+});
 
   // === Graphique qualité de l’air ===
   const ctxAir = document.getElementById('airChart').getContext('2d');
