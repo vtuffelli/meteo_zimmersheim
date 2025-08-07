@@ -261,35 +261,57 @@
     const units = "metric";
     const lang = "fr";
 
-    /* ==== Chapitre 11.1 : Fonctions utilitaires ==== */
-    function degToCardinal(deg) {
-      const dirs = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
-                    "S", "SSO", "SO", "OSO", "O", "ONO", "NO", "NNO"];
-      return dirs[Math.round(deg / 22.5) % 16];
-    }
+/* ==== Chapitre 11.1 : Fonctions utilitaires ==== */
 
-    function formatTime(ts) {
-      return new Date(ts * 1000).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    }
+/**
+ * Convertit un angle en direction cardinale (source du vent).
+ * Ex: 160° → "SSE" (le vent vient du SSE).
+ */
+function degToCardinal(deg) {
+  const dirs = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
+                "S", "SSO", "SO", "OSO", "O", "ONO", "NO", "NNO"];
+  return dirs[Math.round(deg / 22.5) % 16];
+}
 
-    function getMoonPhaseWithDescription(date) {
-      const lp = 2551443;
-      const new_moon = new Date(1970,0,7,20,35,0);
-      const phase = ((date.getTime() - new_moon.getTime())/1000) % lp;
-      const percent = (phase / lp);
-      const index = Math.floor(percent * 8);
-      const phases = [
-        { icon: '🌑', label: 'Nouvelle lune' },
-        { icon: '🌒', label: 'Premier croissant' },
-        { icon: '🌓', label: 'Premier quartier' },
-        { icon: '🌔', label: 'Lune gibbeuse croissante' },
-        { icon: '🌕', label: 'Pleine lune' },
-        { icon: '🌖', label: 'Lune gibbeuse décroissante' },
-        { icon: '🌗', label: 'Dernier quartier' },
-        { icon: '🌘', label: 'Dernier croissant' }
-      ];
-      return phases[index];
-    }
+/**
+ * Calcule l’angle pour afficher visuellement la flèche dans le bon sens.
+ * Ex: 160° → 340° (la flèche pointe vers où le vent souffle).
+ */
+function degToVisualArrow(deg) {
+  return (deg + 180) % 360;
+}
+
+/**
+ * Formate un timestamp UNIX en heure/minute au format FR.
+ */
+function formatTime(ts) {
+  return new Date(ts * 1000).toLocaleTimeString('fr-FR', {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
+/**
+ * Renvoie la phase lunaire actuelle avec une icône et une étiquette.
+ */
+function getMoonPhaseWithDescription(date) {
+  const lp = 2551443; // Durée moyenne d'un cycle lunaire en secondes
+  const new_moon = new Date(1970, 0, 7, 20, 35, 0); // Référence nouvelle lune
+  const phase = ((date.getTime() - new_moon.getTime()) / 1000) % lp;
+  const percent = phase / lp;
+  const index = Math.floor(percent * 8);
+  const phases = [
+    { icon: '🌑', label: 'Nouvelle lune' },
+    { icon: '🌒', label: 'Premier croissant' },
+    { icon: '🌓', label: 'Premier quartier' },
+    { icon: '🌔', label: 'Lune gibbeuse croissante' },
+    { icon: '🌕', label: 'Pleine lune' },
+    { icon: '🌖', label: 'Lune gibbeuse décroissante' },
+    { icon: '🌗', label: 'Dernier quartier' },
+    { icon: '🌘', label: 'Dernier croissant' }
+  ];
+  return phases[index];
+}
 
     /* ==== Chapitre 11.2 : Fetch météo actuelle ==== */
     async function fetchWeather() {
