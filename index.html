@@ -189,12 +189,14 @@
       </div>
     </div>
 
-    <!-- ==== Chapitre 9 : Panneau droit - qualité de l'air ==== -->
-    <div id="right-panel">
-      <h2 style="text-align:center; padding: 10px 0;">Qualité de l'air</h2>
-      <div id="air-quality-details"></div>
-    </div>
+<!-- ==== Chapitre 9 : Panneau droit - qualité de l'air ==== -->
+<div id="right-panel">
+  <h2 style="text-align:center; padding: 10px 0;">Qualité de l'air</h2>
+  <div class="info-row" style="font-weight:700; font-size:1.2rem; margin-bottom: 10px;">
+    Indice AQI global : <span id="aqi-global">Chargement...</span>
   </div>
+  <div id="air-quality-details"></div>
+</div>
 
 <!-- ==== Chapitre 10 : Sections graphiques ==== -->
 <section class="chart-section">
@@ -327,43 +329,79 @@
       document.getElementById("uv-index").textContent = uvValueGlobal;
     }
 
-    /* ==== Chapitre 11.4 : Fetch qualité de l'air ==== */
-    async function fetchAir() {
-      const res = await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=47.7746&lon=7.3373&appid=${apiKey}`);
-      const data = await res.json();
-      const a = data.list[0].components;
+/* ==== Chapitre 11.4 : Fetch qualité de l'air ==== */
+async function fetchAir() {
+  const res = await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=47.7746&lon=7.3373&appid=${apiKey}`);
+  const data = await res.json();
+  const a = data.list[0].components;
 
-      const desc = {
-        co: 'CO (monoxyde de carbone)',
-        no: 'NO (monoxyde d\'azote)',
-        no2: 'NO₂ (dioxyde d\'azote)',
-        o3: 'O₃ (ozone)',
-        so2: 'SO₂ (dioxyde de soufre)',
-        pm2_5: 'PM2.5 (particules fines)',
-        pm10: 'PM10 (grosses particules)',
-        nh3: 'NH₃ (ammoniac)'
-      };
+  const desc = {
+    co: 'CO (monoxyde de carbone)',
+    no: 'NO (monoxyde d\'azote)',
+    no2: 'NO₂ (dioxyde d\'azote)',
+    o3: 'O₃ (ozone)',
+    so2: 'SO₂ (dioxyde de soufre)',
+    pm2_5: 'PM2.5 (particules fines)',
+    pm10: 'PM10 (grosses particules)',
+    nh3: 'NH₃ (ammoniac)'
+  };
 
-      const html = Object.entries(a).map(([key, val]) =>
-        `<div><b>${desc[key] || key}</b> : ${val} µg/m³${interpretAirQuality(key, val)}</div>`
-      ).join("");
-      document.getElementById("air-quality-details").innerHTML = html;
-    }
+  // Calcul simple de l'indice AQI global basé sur les niveaux d'interprétation (0 à 4)
+  const ranges = {
+    pm2_5: [10, 20, 25, 50],
+    pm10: [20, 40, 50, 100],
+    o3: [50, 100, 130, 240],
+    no2: [40, 90, 120, 230],
+    so2: [50, 100, 150, 500],
+    co: [1000, 2000, 5000, 10000],
+    nh3: [200, 400, 600, 1000]
+  };
 
-    function interpretAirQuality(key, val) {
-      const ranges = {
-        pm2_5: [10, 20, 25, 50], pm10: [20, 40, 50, 100],
-        o3: [50, 100, 130, 240], no2: [40, 90, 120, 230],
-        so2: [50, 100, 150, 500], co: [1000, 2000, 5000, 10000],
-        nh3: [200, 400, 600, 1000]
-      };
+  function getIndex(key, val) {
+    const thresholds = ranges[key];
+    if (!thresholds) return 0;
+    const i = thresholds.findIndex(t => val < t);
+    return i >= 0 ? i : thresholds.length;
+  }
 
-      const labels = [' (Bonne)', ' (Acceptable)', ' (Médiocre)', ' (Mauvaise)', ' (Dangereuse)'];
-      const thresholds = ranges[key];
-      if (!thresholds) return '';
-      const i = thresholds.findIndex(t => val < t);
-      return labels[i >= 0 ? i : labels.length - 1];
-    }
+  // Trouver l'indice max parmi tous les polluants (indice AQI global)
+  let maxIndex = 0;
+  for (const [key, val] of Object.entries(a)) {
+    const idx = getIndex(key, val);
+    if (idx > maxIndex) maxIndex = idx;
+  }
+
+  // Labels AQI global (correspondant à l'interpretAirQuality)
+  const aqiLabels = ['Bonne', 'Acceptable', 'Médiocre', 'Mauvaise', 'Dangereuse'];
+
+  // Afficher l'AQI global dans le panneau droit
+  const aqiText = maxIndex < aqiLabels.length ? aqiLabels[maxIndex] : 'Inconnue';
+  document.getElementById("aqi-global").textContent = `${aqiText} (${maxIndex})`;
+
+  // Affichage des détails
+  const html = Object.entries(a).map(([key, val]) =>
+    `<div><b>${desc[key] || key}</b> : ${val} µg/m³${interpretAirQuality(key, val)}</div>`
+  ).join("");
+  document.getElementById("air-quality-details").innerHTML = html;
+}
+
+function interpretAirQuality(key, val) {
+  const ranges = {
+    pm2_5: [10, 20, 25, 50],
+    pm10: [20, 40, 50, 100],
+    o3: [50, 100, 130, 240],
+    no2: [40, 90, 120, 230],
+    so2: [50, 100, 150, 500],
+    co: [1000, 2000, 5000, 10000],
+    nh3: [200, 400, 600, 1000]
+  };
+
+  const labels = [' (Bonne)', ' (Acceptable)', ' (Médiocre)', ' (Mauvaise)', ' (Dangereuse)'];
+  const thresholds = ranges[key];
+  if (!thresholds) return '';
+  const i = thresholds.findIndex(t => val < t);
+  return labels[i >= 0 ? i : labels.length - 1];
+}
 
 /* ==== Chapitre 11.5 : Fetch prévisions météo ==== */
 function degToDirectionIndex(deg) {
