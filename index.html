@@ -542,6 +542,7 @@ window.windChartInstance = new Chart(ctxWind, {
   },
   options: {
     responsive: true,
+    maintainAspectRatio: false,
     interaction: { mode: 'index', intersect: false },
     stacked: false,
     scales: {
@@ -549,6 +550,9 @@ window.windChartInstance = new Chart(ctxWind, {
         position: 'left',
         title: { display: true, text: 'Vent (km/h)' },
         min: 0,
+        ticks: {
+          callback: (val) => `${val} km/h`
+        }
       },
       y2: {
         position: 'right',
@@ -556,6 +560,9 @@ window.windChartInstance = new Chart(ctxWind, {
         min: 0,
         max: 100,
         grid: { drawOnChartArea: false },
+        ticks: {
+          callback: (val) => `${val}%`
+        }
       },
       y3: {
         position: 'right',
@@ -575,12 +582,13 @@ window.windChartInstance = new Chart(ctxWind, {
         mode: 'index',
         intersect: false,
         callbacks: {
-          label: function(context) {
-            if (context.dataset.label === 'Orientation vent') {
-              const index = context.parsed.y;
-              return `Orientation vent : ${windDirs[index] || 'Inconnu'}`;
+          label: function (context) {
+            const label = context.dataset.label || '';
+            const val = context.parsed.y;
+            if (label === 'Orientation vent') {
+              return `${label} : ${windDirs[val] || 'Inconnu'}`;
             }
-            return `${context.dataset.label} : ${context.formattedValue}`;
+            return `${label} : ${val}`;
           }
         }
       }
